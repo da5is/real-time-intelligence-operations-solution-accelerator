@@ -1,6 +1,6 @@
 # Fabric Data Ingestion Guide
 
-Loads CSV data into Microsoft Fabric database tables using Azure authentication. This document provides guidance on calling the fabric_data_ingester.py script directly to refresh the sample data (including events) within the KQL database in your Fabric workspace. Execute this script to also refresh the historical event data (via the `--refresh-dates` argument) to match up to today's current date and time to ensure the dashboard displays more recent past results. 
+ This document provides guidance on calling the fabric_data_ingester.py script directly to refresh the sample data (including events) within the KQL database in your Fabric workspace. Execute this script to also refresh the historical event data (via the `--refresh-dates` argument) to match up to today's current date and time to ensure the dashboard displays more recent past results. 
 
 NOTE: This script is called automatically during deployment as part of the `azd up` process. Follow this documentation to see how it can be called separately in order to solely focus on refreshing the data in the workspace.
 
@@ -11,6 +11,8 @@ NOTE: This script is called automatically during deployment as part of the `azd 
 ```bash
 pip install azure-identity azure-kusto-data azure-kusto-ingest pandas
 ```
+
+> **Note:** This command works in both Bash and PowerShell.
 
 ### Fabric Workspace
 
@@ -29,6 +31,8 @@ cd infra/scripts/fabric
 python fabric_data_ingester.py --cluster-uri <CLUSTER_URI> --database <DATABASE_NAME> [OPTIONS]
 ```
 
+> **Note:** These commands work in both Bash and PowerShell.
+
 ### Required Arguments
 
 - `--cluster-uri` - Fabric cluster URI (e.g., `https://mycluster.region.kusto.fabric.microsoft.com`)
@@ -42,14 +46,25 @@ python fabric_data_ingester.py --cluster-uri <CLUSTER_URI> --database <DATABASE_
 
 ## Examples
 
-Basic ingestion:
+### Basic ingestion
+
+**Bash/Linux/macOS:**
 ```bash
 python fabric_data_ingester.py \
   --cluster-uri https://mycluster.westus.kusto.fabric.microsoft.com \
   --database manufacturing_db
 ```
 
-Refresh dates and overwrite existing data:
+**PowerShell:**
+```powershell
+python fabric_data_ingester.py `
+  --cluster-uri https://mycluster.westus.kusto.fabric.microsoft.com `
+  --database manufacturing_db
+```
+
+### Refresh dates and overwrite existing data
+
+**Bash/Linux/macOS:**
 ```bash
 python fabric_data_ingester.py \
   --cluster-uri https://mycluster.westus.kusto.fabric.microsoft.com \
@@ -58,12 +73,31 @@ python fabric_data_ingester.py \
   --overwrite
 ```
 
-Custom data path:
+**PowerShell:**
+```powershell
+python fabric_data_ingester.py `
+  --cluster-uri https://mycluster.westus.kusto.fabric.microsoft.com `
+  --database manufacturing_db `
+  --refresh-dates `
+  --overwrite
+```
+
+### Custom data path
+
+**Bash/Linux/macOS:**
 ```bash
 python fabric_data_ingester.py \
   --cluster-uri https://mycluster.westus.kusto.fabric.microsoft.com \
   --database manufacturing_db \
   --data-path /path/to/csv/files
+```
+
+**PowerShell:**
+```powershell
+python fabric_data_ingester.py `
+  --cluster-uri https://mycluster.westus.kusto.fabric.microsoft.com `
+  --database manufacturing_db `
+  --data-path C:\path\to\csv\files
 ```
 
 ## Expected CSV Files

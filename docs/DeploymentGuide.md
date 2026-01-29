@@ -276,26 +276,35 @@ Select one of the following options to deploy the solution:
 > - You want to use custom names for workspace or components
 > - You need to specify workspace administrators
 > - You want to configure alert email addresses
-> - You plan to use an existing Fabric capacity (cost optimization)
 >
 > **If you want a standard deployment with defaults:** Skip directly to [Step 4: Deploy the Solution](#step-4-deploy-the-solution).
 
-Review these configuration options before deploying. You can use default values or customize as needed.
+Set environment variables before running `azd up` to customize your deployment:
 
-### 3.1 Environment Variables (Optional)
+| Variable | Description | Default Value |
+|----------|-------------|---------------|
+| `FABRIC_WORKSPACE_NAME` | Fabric workspace name | `Real-Time Intelligence for Operations - <suffix>` |
+| `FABRIC_WORKSPACE_ADMINISTRATORS` | Workspace admins (comma-separated) | None |
+| `FABRIC_EVENTHOUSE_NAME` | Eventhouse name | `rti_eventhouse_<suffix>` |
+| `FABRIC_EVENTHOUSE_DATABASE_NAME` | KQL database name | `rti_kqldb_<suffix>` |
+| `FABRIC_EVENT_HUB_CONNECTION_NAME` | Event Hub connection name | `rti_eventhub_connection_<suffix>` |
+| `FABRIC_RTIDASHBOARD_NAME` | Real-time dashboard name | `rti_dashboard_<suffix>` |
+| `FABRIC_EVENTSTREAM_NAME` | Eventstream name | `rti_eventstream_<suffix>` |
+| `FABRIC_ACTIVATOR_NAME` | Activator name | `rti_activator_<suffix>` |
+| `FABRIC_ACTIVATOR_ALERTS_EMAIL` | Alert email address | `alerts@contoso.com` |
+| `FABRIC_DATA_AGENT_NAME` | Data Agent name | `rti_dataagent_<suffix>` |
+| `FABRIC_DATA_AGENT_CONFIGURATION_FOLDER_NAME` | Data agent config folder | `rti_dataagentconfig_<suffix>` |
+| `FABRIC_DATA_AGENT_CONFIGURATION_ENVIRONMENT_NAME` | Data agent environment | `rti_environment_<suffix>` |
+| `FABRIC_DATA_AGENT_CONFIGURATION_NOTEBOOK_NAME` | Data agent notebook | `rti_notebook_<suffix>` |
 
-Set these variables before running `azd up` to customize your deployment:
-
-**Workspace Configuration:**
+**Example usage:**
 
 ```bash
+# Workspace Configuration
 azd env set FABRIC_WORKSPACE_NAME "My RTI Workspace"
 azd env set FABRIC_WORKSPACE_ADMINISTRATORS "user@company.com,another-user@company.com"
-```
 
-**Component Names:**
-
-```bash
+# Component Names
 azd env set FABRIC_EVENTHOUSE_NAME "my_custom_eventhouse"
 azd env set FABRIC_EVENTHOUSE_DATABASE_NAME "my_custom_kql_db"
 azd env set FABRIC_EVENT_HUB_CONNECTION_NAME "my_eventhub_connection"
@@ -306,42 +315,12 @@ azd env set FABRIC_DATA_AGENT_NAME "my_custom_dataagent"
 azd env set FABRIC_DATA_AGENT_CONFIGURATION_FOLDER_NAME "my_custom_folder"
 azd env set FABRIC_DATA_AGENT_CONFIGURATION_ENVIRONMENT_NAME "my_custom_environment"
 azd env set FABRIC_DATA_AGENT_CONFIGURATION_NOTEBOOK_NAME "my_custom_notebook"
-```
 
-**Alert Configuration:**
-
-```bash
+# Alert Configuration
 azd env set FABRIC_ACTIVATOR_ALERTS_EMAIL "myteam@company.com"
 ```
 
-**Cost Optimization:**
-
-```bash
-# Use existing Fabric capacity (skips creating new capacity)
-azd env set AZURE_DEPLOY_FABRIC_CAPACITY false
-```
-
-### 3.2 Configuration Reference
-
-#### Customizable Variables
-
-| Variable | Description | Default Value |
-|----------|-------------|---|
-| `FABRIC_WORKSPACE_NAME` | Fabric workspace name | `Real-Time Intelligence for Operations - <env-name><suffix>` |
-| `FABRIC_WORKSPACE_ADMINISTRATORS` | Workspace admins (comma-separated identities) | None |
-| `FABRIC_EVENTHOUSE_NAME` | Eventhouse name | `rti_eventhouse_<env-name><suffix>` |
-| `FABRIC_EVENTHOUSE_DATABASE_NAME` | KQL database name | `rti_kqldb_<env-name><suffix>` |
-| `FABRIC_EVENT_HUB_CONNECTION_NAME` | Event Hub connection name | `rti_eventhub_connection_<env-name><suffix>` |
-| `FABRIC_RTIDASHBOARD_NAME` | Real-time dashboard name | `rti_dashboard_<env-name><suffix>` |
-| `FABRIC_EVENTSTREAM_NAME` | Eventstream name | `rti_eventstream_<env-name><suffix>` |
-| `FABRIC_ACTIVATOR_NAME` | Activator name | `rti_activator_<env-name><suffix>` |
-| `FABRIC_ACTIVATOR_ALERTS_EMAIL` | Alert email address | `alerts@contoso.com` |
-| `FABRIC_DATA_AGENT_NAME` | Data Agent name | `rti_dataagent_<env-name><suffix>` |
-| `FABRIC_DATA_AGENT_CONFIGURATION_FOLDER_NAME` | Folder name for organizing data agent configuration components | `rti_dataagentconfig_<env-name><suffix>` |
-| `FABRIC_DATA_AGENT_CONFIGURATION_ENVIRONMENT_NAME` | Environment name with the python libraries required to configure data agent | `rti_environment_<env-name><suffix>` |
-| `FABRIC_DATA_AGENT_CONFIGURATION_NOTEBOOK_NAME` | Notebook to set up the Data Agent configuration | `rti_notebook_<env-name><suffix>` |
-
-#### System-Managed Variables
+### System-Managed Variables
 
 These are automatically set by the deployment:
 
@@ -359,16 +338,7 @@ These are automatically set by the deployment:
 
 ## Step 4: Deploy the Solution
 
-### 4.1 Clone Repository (If Needed)
-
-If you haven't already cloned the repository, do so now:
-
-```bash
-git clone https://github.com/microsoft/real-time-intelligence-operations-solution-accelerator.git
-cd real-time-intelligence-operations-solution-accelerator
-```
-
-### 4.2 Authenticate with Azure
+### 4.1 Authenticate with Azure
 
 ```bash
 # Login to Azure
@@ -387,47 +357,24 @@ azd auth login --tenant-id <your-tenant-id>
 Additionally, authenticate with Azure CLI to enable the deployment script to access Azure resources:
 
 ```bash
-# login to access Azure resources
+# Login to access Azure resources
 az login
+
+# For Codespaces, DevContainers, or VS Code Web (no browser available):
+az login --use-device-code
 ```
 
-### 4.3 Configure Alert Email (Recommended)
+### 4.2 Configure Alert Email (Recommended)
 
-Set your email address to receive real-time alerts:
+Set your email address to receive real-time anomaly alerts:
 
 ```bash
-azd env set FABRIC_ACTIVATOR_ALERTS_EMAIL "myteam@company.com" # set email to receive alerts
+azd env set FABRIC_ACTIVATOR_ALERTS_EMAIL "myteam@company.com"
 ```
 
-### 4.4 Customize Resource Names (Optional)
+> **Note:** For additional customization (workspace names, component names), see [Step 3: Configure Deployment Settings](#step-3-configure-deployment-settings---advanced-configuration).
 
-Configure custom names for your workspace and components:
-
-**Workspace Configuration:**
-
-```bash
-azd env set FABRIC_WORKSPACE_NAME "My RTI Workspace"
-azd env set FABRIC_WORKSPACE_ADMINISTRATORS "user@company.com,12345678-1234-abcd-1234-123456789abc" # comma-separated
-```
-
-**Component Names:**
-
-```bash
-azd env set FABRIC_EVENTHOUSE_NAME "my_custom_eventhouse"
-azd env set FABRIC_EVENTHOUSE_DATABASE_NAME "my_custom_kql_db"
-azd env set FABRIC_EVENT_HUB_CONNECTION_NAME "my_eventhub_connection"
-azd env set FABRIC_RTIDASHBOARD_NAME "My Custom Dashboard"
-azd env set FABRIC_EVENTSTREAM_NAME "my_custom_eventstream"
-azd env set FABRIC_ACTIVATOR_NAME "my_custom_activator"
-azd env set FABRIC_DATA_AGENT_NAME "my_custom_dataagent"
-azd env set FABRIC_DATA_AGENT_CONFIGURATION_FOLDER_NAME "my_custom_folder"
-azd env set FABRIC_DATA_AGENT_CONFIGURATION_ENVIRONMENT_NAME "my_custom_environment"
-azd env set FABRIC_DATA_AGENT_CONFIGURATION_NOTEBOOK_NAME "my_custom_notebook"
-```
-
-> **Note:** These are optional. If not set, defaults will use your environment name and a generated suffix.
-
-### 4.5 Start Deployment
+### 4.3 Start Deployment
 
 Run the deployment command:
 
@@ -451,9 +398,7 @@ During deployment, you'll be prompted for:
 6. Folder setup
 7. Data Agent configuration through Runbook (Preview)
 
-> **Preview Feature Notice:** Steps involving Fabric Data Agent configuration are [Preview features](https://learn.microsoft.com/en-us/fabric/data-science/fabric-data-agent-sdk). If these steps fail, the core functionality will still work, and you can complete the setup manually using our guides.
-
-### 4.6 Verify Deployment Success
+### 4.4 Verify Deployment Success
 
 After `azd up` completes successfully:
 
@@ -463,36 +408,24 @@ After `azd up` completes successfully:
 
 ⚠️ **Deployment Issues?** Check [Known Issues and Troubleshooting](#known-issues-and-troubleshooting) for common solutions.
 
-> **Preview Feature Notice:** If the Data Agent setup fails during deployment (step 14), the core Real-Time Intelligence functionality will still work. You can complete the Data Agent setup manually using the [Fabric Data Agent Guide](./FabricDataAgentGuide.md).
-
-**What You Get:**
-
-- Complete real-time analytics platform with Event Hub, Fabric Eventhouse, KQL database
-- Sample data pre-loaded for testing and demonstration
-- Real-time dashboards for operational monitoring
-- Automated alerting with Activator for anomaly detection
-- Eventstream for data pipeline orchestration
-- AI-powered Data Agent for conversational queries
-- Fabric runbook and environment for Data Agent configuration
+> **Preview Feature Notice:** Steps involving Fabric Data Agent configuration are [Preview features](https://learn.microsoft.com/en-us/fabric/data-science/fabric-data-agent-sdk). If these steps fail, the core functionality will still work. You can complete the Data Agent setup manually using the [Fabric Data Agent Guide](./FabricDataAgentGuide.md).
 
 ---
 
 ## Step 5: Post-Deployment Configuration
 
-### 5.1 Verify Fabric Data Agent Setup
+### 5.1 Start Event Simulation
 
-The AI-powered Fabric Data Agent is automatically configured during deployment to answer natural language questions about your data.
-
-- **Verification and Usage:** See [Fabric Data Agent Guide](./FabricDataAgentGuide.md)
-- **Demonstration Flow:** See [Demonstrator's Guide - Step 1](./DemonstratorGuide.md#step-1-demonstrate-the-fabric-data-agent)
-
-> **Note:** Data Agent automation is a Preview feature. If the automated setup fails during deployment, you can complete the setup manually using the guide above.
-
-### 5.2 Start Event Simulation
-
-Test your new environment with real-time streaming data.
+Start generating real-time streaming data to test your environment.
 
 - **Setup and Instructions:** See [Event Simulator Guide](./EventSimulatorGuide.md)
+
+### 5.2 Verify Real-Time Dashboard
+
+Confirm your dashboard displays live data from the Event Simulator.
+
+- **Dashboard Guide:** See [Real-Time Intelligence Dashboard Guide](./RealTimeIntelligenceDashboardGuide.md)
+- **Demonstration Flow:** See [Demonstrator's Guide - Step 4](./DemonstratorGuide.md#step-4-demonstrate-the-real-time-intelligence-operations-dashboard)
 
 ### 5.3 Configure Activator for Anomaly Detection
 
@@ -505,41 +438,21 @@ Set up real-time anomaly detection and alert notifications with Activator.
   - **High Defect Probability** - Triggers when defect probability exceeds 0.02
 
 - **Configuration:**
-
   - Alert delivery via email (configured during deployment)
   - Optional: Configure Microsoft Teams channel alerts
   - Review and customize alert thresholds as needed
 
 - **Setup and Configuration:** See [Activator Guide](./ActivatorGuide.md)
-
 - **Demonstration Flow:** See [Demonstrator's Guide - Step 5](./DemonstratorGuide.md#step-5-demonstrate-alert-mechanisms-with-activator)
 
-### 5.4 Verify Deployment Components
+### 5.4 Test Fabric Data Agent
 
-Access your deployed resources to confirm everything is working:
+The AI-powered Fabric Data Agent answers natural language questions about your data.
 
-- **Azure Portal:**
+- **Verification and Usage:** See [Fabric Data Agent Guide](./FabricDataAgentGuide.md)
+- **Demonstration Flow:** See [Demonstrator's Guide - Step 1](./DemonstratorGuide.md#step-1-demonstrate-the-fabric-data-agent)
 
-  - View infrastructure, Event Hub, and Fabric Capacity
-  - Monitor resource health and metrics
-
-- **Fabric Workspace (app.fabric.microsoft.com):**
-
-  - Eventhouse and KQL database
-  - Real-time dashboards
-  - Eventstream data pipeline
-  - Activator with configured alert rules
-
-### 5.5 Explore Sample Features
-
-- **Real-Time Dashboard:**
-  - Open the dashboard created during deployment (e.g., `rti_dashboard_myrti...`)
-  - Monitor live asset telemetry and operational metrics
-
-- **Data Agent (Conversational Queries):**
-  - Ask natural language questions about your data
-  - See AI-powered query generation
-  - Explore data insights conversationally
+> **Note:** Data Agent automation is a Preview feature. If the automated setup fails during deployment, you can complete the setup manually using the guide above.
 
 ---
 

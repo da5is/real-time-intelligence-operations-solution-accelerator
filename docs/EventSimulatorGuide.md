@@ -12,20 +12,32 @@ If you are the owner of the Azure Event Hub deployed with the solution, you alre
 
 NOTE: If the executing environment deployed the resources via AZD following the [deployment guide](./DeploymentGuide.md) in this solution, the required environment variables for the event simulator will be set automatically and this step can be skipped.
 
-If using Powershell, use this [syntax for setting environment variables](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_environment_variables?view=powershell-7.5#use-the-variable-syntax).
+Visit the Azure Portal to get the Event Hub namespace hostname and Event Hub name.
 
-Visit the Azure Portal to get the Event Hub name and connection string of the environment.
-
+**Bash/Linux/macOS:**
 ```bash
-export EVENT_HUB_CONNECTION_STRING="Endpoint=sb://..."
-export EVENT_HUB_NAME="<event-hub-name>"
+export AZURE_EVENT_HUB_NAMESPACE_HOSTNAME="<namespace>.servicebus.windows.net"
+export AZURE_EVENT_HUB_NAME="<event-hub-name>"
+```
+
+**PowerShell:**
+```powershell
+$env:AZURE_EVENT_HUB_NAMESPACE_HOSTNAME = "<namespace>.servicebus.windows.net"
+$env:AZURE_EVENT_HUB_NAME = "<event-hub-name>"
 ```
 
 ### 2. Set Environment Variables (Optional)
 
+**Bash/Linux/macOS:**
 ```bash
 export SIMULATION_INTERVAL="5"        # Seconds between events per asset (default: 5)
 export MAX_RUNTIME_SECONDS="300"      # Max runtime in seconds (default: unlimited)
+```
+
+**PowerShell:**
+```powershell
+$env:SIMULATION_INTERVAL = "5"        # Seconds between events per asset (default: 5)
+$env:MAX_RUNTIME_SECONDS = "300"      # Max runtime in seconds (default: unlimited)
 ```
 
 ### 3. Run the Simulator

@@ -81,43 +81,12 @@ Quick deploy
 
 ### How to install or deploy
 
-Follow these steps to deploy the solution to your own Azure subscription:
+Follow the quick deploy steps on the deployment guide to deploy this solution to your own Azure subscription.
+
+**For Azure Deployment:** [Click here to launch the deployment guide](./docs/DeploymentGuide.md)
 
 | [![GitHub Codespaces](https://img.shields.io/badge/GitHub_Codespaces-Open-grey?style=flat&labelColor=grey&message=Open&color=blue&logo=github)](https://codespaces.new/microsoft/real-time-intelligence-operations-solution-accelerator) | [![Visual Studio Code Dev Containers](https://img.shields.io/badge/Visual_Studio_Code_Dev_Container-Open-gray?style=flat&labelColor=grey&message=Open&color=blue)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/real-time-intelligence-operations-solution-accelerator) | [![Visual Studio Code Web](https://img.shields.io/badge/Visual_Studio_Code_Web-Open-gray?style=flat&labelColor=grey&message=Open&color=blue)](https://vscode.dev/azure/?vscode-azure-exp=foundry&agentPayload=eyJiYXNlVXJsIjogImh0dHBzOi8vcmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbS9taWNyb3NvZnQvcmVhbC10aW1lLWludGVsbGlnZW5jZS1vcGVyYXRpb25zLXNvbHV0aW9uLWFjY2VsZXJhdG9yL3JlZnMvaGVhZHMvbWFpbi9pbmZyYS92c2NvZGVfd2ViIiwgImluZGV4VXJsIjogIi9pbmRleC5qc29uIiwgInZhcmlhYmxlcyI6IHsiYWdlbnRJZCI6ICIiLCAiY29ubmVjdGlvblN0cmluZyI6ICIiLCAidGhyZWFkSWQiOiAiIiwgInVzZXJNZXNzYWdlIjogIiIsICJwbGF5Z3JvdW5kTmFtZSI6ICIiLCAibG9jYXRpb24iOiAiIiwgInN1YnNjcmlwdGlvbklkIjogIiIsICJyZXNvdXJjZUlkIjogIiIsICJwcm9qZWN0UmVzb3VyY2VJZCI6ICIiLCAiZW5kcG9pbnQiOiAiIn0sICJjb2RlUm91dGUiOiBbImFpLXByb2plY3RzLXNkayIsICJweXRob24iLCAiZGVmYXVsdC1henVyZS1hdXRoIiwgImVuZHBvaW50Il19) | [![Azure Cloud Shell](https://img.shields.io/badge/Azure_Cloud_Shell-Open-grey?style=flat&labelColor=grey&message=Open&color=blue)](https://portal.azure.com/#cloudshell/) |
 |---|---|---|---|
-
-**One-command deployment** - Deploy everything with [Azure Developer CLI](https://learn.microsoft.com/azure/developer/azure-developer-cli/install-azd) and [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) (check [prerequisites](./docs/DeploymentGuide.md#step-1-prerequisites--setup)):
-
-```bash
-# Clone and navigate to repository
-git clone https://github.com/microsoft/real-time-intelligence-operations-solution-accelerator.git
-cd real-time-intelligence-operations-solution-accelerator
-
-# Authenticate (required)
-azd auth login # Required to deploy with azd up
-az login # Required to use the Azure CLI commands that connect Azure resources to Fabric workspace
-
-# Recommended: set email to receive alerts
-azd env set FABRIC_ACTIVATOR_ALERTS_EMAIL "myteam@company.com"
-
-
-# Optional: Customize resource names
-azd env set FABRIC_WORKSPACE_NAME "My RTI Workspace"
-azd env set FABRIC_WORKSPACE_ADMINISTRATORS "user@company.com,12345678-1234-abcd-1234-123456789abc" # comma-separated
-azd env set FABRIC_EVENTHOUSE_NAME "my_custom_eventhouse"
-azd env set FABRIC_EVENTHOUSE_DATABASE_NAME "my_custom_kql_db"
-azd env set FABRIC_EVENT_HUB_CONNECTION_NAME "my_eventhub_connection"
-azd env set FABRIC_RTIDASHBOARD_NAME "My Custom Dashboard"
-azd env set FABRIC_EVENTSTREAM_NAME "my_custom_eventstream"
-azd env set FABRIC_ACTIVATOR_NAME "my_custom_activator"
-
-# Deploy everything
-azd up
-```
-
-<br/>
-
-For additional deployment configuration and detailed setup instructions, see the [deployment guide](./docs/DeploymentGuide.md).
 
 ### Prerequisites and costs
 Microsoft Fabric Capacity is enabled for your organization. Please refer to [Enable Microsoft Fabric for your organization](https://learn.microsoft.com/en-us/fabric/admin/fabric-switch) for more information.
