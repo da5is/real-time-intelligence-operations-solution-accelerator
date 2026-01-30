@@ -152,14 +152,18 @@ Select one of the following options to deploy the solution:
 | **[GitHub Actions](#option-e-github-actions)** | Azure service principal | Federated identity, automated deployment |
 | **[Visual Studio Code Web](#option-f-visual-studio-code-web)** | Web browser | Pre-configured tools, session timeouts |
 
-### Option A: GitHub Codespaces
+<details>
+<summary><strong>Option A: GitHub Codespaces</strong></summary>
 
 1. Go to the [Real-Time Intelligence Operations repository in GitHub Codespaces](https://codespaces.new/microsoft/real-time-intelligence-operations-solution-accelerator)
 2. Follow the instructions on screen to create a new codespace with default setup.
 2. Wait for the environment to initialize (2-3 minutes)
 3. All tools are pre-installed; proceed to [Step 4: Deploy](#step-4-deploy-the-solution)
 
-### Option B: VS Code Dev Container
+</details>
+
+<details>
+<summary><strong>Option B: VS Code Dev Container</strong></summary>
 
 **Consistent development environment using Docker.**
 
@@ -177,7 +181,10 @@ Select one of the following options to deploy the solution:
 6. Click "Reopen in Container" when prompted
 7. All tools are pre-installed; proceed to [Step 4: Deploy](#step-4-deploy-the-solution)
 
-### Option C: Local Machine
+</details>
+
+<details>
+<summary><strong>Option C: Local Machine</strong></summary>
 
 **Full control with your local development environment.**
 
@@ -191,7 +198,10 @@ Select one of the following options to deploy the solution:
 
 3. Proceed to [Step 4: Deploy](#step-4-deploy-the-solution)
 
-### Option D: Azure Cloud Shell
+</details>
+
+<details>
+<summary><strong>Option D: Azure Cloud Shell</strong></summary>
 
 **Deploy from your browser—no local setup required.**
 
@@ -212,7 +222,10 @@ Select one of the following options to deploy the solution:
 
 5. Proceed to [Step 4: Deploy](#step-4-deploy-the-solution)
 
-### Option E: GitHub Actions
+</details>
+
+<details>
+<summary><strong>Option E: GitHub Actions</strong></summary>
 
 **Automated CI/CD deployment using GitHub Actions.**
 
@@ -231,7 +244,10 @@ Select one of the following options to deploy the solution:
 7. Click **Run workflow** and select your branch
 8. Monitor the deployment progress in the Actions tab
 
-### Option F: Visual Studio Code Web
+</details>
+
+<details>
+<summary><strong>Option F: Visual Studio Code Web</strong></summary>
 
 **Deploy from your browser—no local setup required.**
 
@@ -264,6 +280,8 @@ Select one of the following options to deploy the solution:
    > **Note:** In VS Code Web environment, the regular `az login` command may fail. Use the `--use-device-code` flag to authenticate via device code flow. Follow the prompts in the terminal to complete authentication.
 
 7. Proceed to deployment: [Step 4: Deploy](#step-4-deploy-the-solution)
+
+</details>
 
 ---
 
