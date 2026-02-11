@@ -314,12 +314,34 @@ azd env set FABRIC_DATA_AGENT_CONFIGURATION_NOTEBOOK_NAME "my_custom_notebook"
 azd env set FABRIC_ACTIVATOR_ALERTS_EMAIL "myteam@company.com"
 ```
 
-**Cost Optimization:**
+**Use Existing Azure Resources:**
+
+If you already have Azure resources that you want to reuse instead of creating new ones, set these environment variables before running `azd up`:
 
 ```bash
-# Use existing Fabric capacity (skips creating new capacity)
-azd env set AZURE_DEPLOY_FABRIC_CAPACITY false
+# Option 1: Use existing Event Hub Namespace AND create a new Event Hub in it
+azd env set EXISTING_EVENT_HUB_NAMESPACE_NAME "my-existing-eventhub-namespace"
+
+# Option 2: Use existing Event Hub Namespace AND existing Event Hub
+azd env set EXISTING_EVENT_HUB_NAMESPACE_NAME "my-existing-eventhub-namespace"
+azd env set EXISTING_EVENT_HUB_NAME "my-existing-eventhub"
+
+# Use an existing Fabric Capacity
+azd env set EXISTING_FABRIC_CAPACITY_NAME "my-existing-fabric-capacity"
+
+# Use an existing Fabric Workspace (provide the exact workspace name)
+azd env set FABRIC_WORKSPACE_NAME "My Existing Workspace Name"
 ```
+
+> **Note:** When using existing resources:
+>
+> - The existing Event Hub Namespace must be in the same resource group as the deployment
+> - The existing Fabric Capacity must be in the same resource group as the deployment
+> - For existing Fabric Workspace, provide the exact workspace name - the deployment will detect and reuse it
+> - Ensure you have appropriate permissions on the existing resources
+> - If only `EXISTING_EVENT_HUB_NAMESPACE_NAME` is set, a new Event Hub will be created in that existing namespace
+> - If both `EXISTING_EVENT_HUB_NAMESPACE_NAME` and `EXISTING_EVENT_HUB_NAME` are set, both existing resources will be used
+> - You can mix and match: use an existing workspace but create new Azure resources, or vice versa
 
 ### 3.2 Configuration Reference
 
@@ -327,7 +349,7 @@ azd env set AZURE_DEPLOY_FABRIC_CAPACITY false
 
 | Variable | Description | Default Value |
 |----------|-------------|---|
-| `FABRIC_WORKSPACE_NAME` | Fabric workspace name | `Real-Time Intelligence for Operations - <env-name><suffix>` |
+| `FABRIC_WORKSPACE_NAME` | Fabric workspace name (if exists, will be reused) | `Real-Time Intelligence for Operations - <env-name><suffix>` |
 | `FABRIC_WORKSPACE_ADMINISTRATORS` | Workspace admins (comma-separated identities) | None |
 | `FABRIC_EVENTHOUSE_NAME` | Eventhouse name | `rti_eventhouse_<env-name><suffix>` |
 | `FABRIC_EVENTHOUSE_DATABASE_NAME` | KQL database name | `rti_kqldb_<env-name><suffix>` |
@@ -340,6 +362,9 @@ azd env set AZURE_DEPLOY_FABRIC_CAPACITY false
 | `FABRIC_DATA_AGENT_CONFIGURATION_FOLDER_NAME` | Folder name for organizing data agent configuration components | `rti_dataagentconfig_<env-name><suffix>` |
 | `FABRIC_DATA_AGENT_CONFIGURATION_ENVIRONMENT_NAME` | Environment name with the python libraries required to configure data agent | `rti_environment_<env-name><suffix>` |
 | `FABRIC_DATA_AGENT_CONFIGURATION_NOTEBOOK_NAME` | Notebook to set up the Data Agent configuration | `rti_notebook_<env-name><suffix>` |
+| `EXISTING_EVENT_HUB_NAMESPACE_NAME` | Name of existing Event Hub Namespace (new Event Hub created if `EXISTING_EVENT_HUB_NAME` not set) | None |
+| `EXISTING_EVENT_HUB_NAME` | Name of existing Event Hub (optional, requires `EXISTING_EVENT_HUB_NAMESPACE_NAME`) | None |
+| `EXISTING_FABRIC_CAPACITY_NAME` | Name of existing Fabric Capacity to use (skips creation) | None |
 
 #### System-Managed Variables
 
