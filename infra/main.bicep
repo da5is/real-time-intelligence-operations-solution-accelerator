@@ -55,6 +55,9 @@ param existingEventHubNamespaceName string = ''
 @description('Optional. Name of an existing Event Hub within the namespace to use. When provided along with existingEventHubNamespaceName, a new Event Hub will not be created.')
 param existingEventHubName string = ''
 
+@description('Optional. Resource group name where the existing Event Hub Namespace is located. Required when using existingEventHubNamespaceName that is in a different resource group.')
+param existingEventHubResourceGroupName string = ''
+
 @description('Optional. Name of an existing Fabric Capacity to use. When provided, a new Fabric Capacity will not be created.')
 param existingFabricCapacityName string = ''
 
@@ -186,3 +189,6 @@ output USING_EXISTING_EVENT_HUB bool = useExistingEventHub
 
 @description('Indicates whether existing Fabric Capacity was used.')
 output USING_EXISTING_FABRIC_CAPACITY bool = useExistingFabricCapacity
+
+@description('The resource group name where the Event Hub Namespace is located.')
+output AZURE_EVENT_HUB_RESOURCE_GROUP string = useExistingEventHubNamespace && !empty(existingEventHubResourceGroupName) ? existingEventHubResourceGroupName : resourceGroup().name

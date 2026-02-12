@@ -93,6 +93,8 @@ def main():
     capacity_name = get_required_env_var("AZURE_FABRIC_CAPACITY_NAME")
     event_hub_name = get_required_env_var("AZURE_EVENT_HUB_NAME")
     event_hub_namespace_name = get_required_env_var("AZURE_EVENT_HUB_NAMESPACE_NAME")
+    # Event Hub resource group (defaults to main resource group if not specified)
+    event_hub_resource_group_name = os.getenv("AZURE_EVENT_HUB_RESOURCE_GROUP", resource_group_name)
     event_hub_authorization_rule_name = os.getenv("AZURE_EVENT_HUB_AUTHORIZATION_RULE_NAME", "RootManageSharedAccessKey")
     workspace_name = os.getenv("FABRIC_WORKSPACE_NAME", f"Real-Time Intelligence for Operations - {solution_suffix}")
     workspace_administrators = os.getenv("FABRIC_WORKSPACE_ADMINISTRATORS")
@@ -118,6 +120,7 @@ def main():
     print(f"Event Hub Connection Name: {event_hub_connection_name}")
     print(f"Event Hub Namespace Name: {event_hub_namespace_name}")
     print(f"Event Hub Name: {event_hub_name}")
+    print(f"Event Hub Resource Group: {event_hub_resource_group_name}")
     print(f"Environment Name: {environment_name}")
     print(f"Data Agent Name: {data_agent_name}")
     print(f"Folder Name: {folder_name}")
@@ -274,7 +277,7 @@ def main():
             namespace_name=event_hub_namespace_name,
             event_hub_name=event_hub_name,
             subscription_id=subscription_id,
-            resource_group_name=resource_group_name,
+            resource_group_name=event_hub_resource_group_name,
             authorization_rule_name=event_hub_authorization_rule_name
         )
         if eventhub_connection_result is None:
