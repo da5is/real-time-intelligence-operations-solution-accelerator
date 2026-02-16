@@ -13,9 +13,6 @@
     },
     "existingFabricCapacityName": {
       "value": "${EXISTING_FABRIC_CAPACITY_NAME}"
-    },
-    "existingEventHubResourceGroupName": {
-      "value": "${EXISTING_EVENT_HUB_RESOURCE_GROUP_NAME}"
     }
   }
 }

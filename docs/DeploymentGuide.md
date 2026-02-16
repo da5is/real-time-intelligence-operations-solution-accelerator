@@ -80,13 +80,16 @@ Ensure you have access to an [Azure subscription](https://azure.microsoft.com/fr
 | **Contributor** | Subscription/Resource Group | Deploy Bicep templates and create Azure resources |
 | **User Access Administrator** | Subscription/Resource Group | Configure role-based access control (RBAC) |
 
-**How to Check Your Permissions:**
+<details>
+<summary><b>How to Check Your Permissions</b></summary>
 
 1. Go to [Azure Portal](https://portal.azure.com/)
 2. Search for "Subscriptions" in the top search bar
 3. Click on your target subscription
 4. Select **Access control (IAM)** from the left menu
 5. Look for your user account—you should see **Contributor** or **Owner** role assigned
+
+</details>
 
 ### 1.2 Microsoft Fabric Requirements
 
@@ -124,7 +127,8 @@ Install the following tools on your local machine:
 | **Azure Developer CLI (azd)** | Latest | [Install azd](https://learn.microsoft.com/azure/developer/azure-developer-cli/install-azd) |
 | **Git** | Latest | [Download from git-scm.com](https://git-scm.com/downloads) |
 
-**Verify Installation:**
+<details>
+<summary><b>Verify Installation</b></summary>
 
 ```bash
 python --version
@@ -132,6 +136,8 @@ az --version
 azd version
 git --version
 ```
+
+</details>
 
 📖 **Detailed Setup:** For complete Azure account configuration, see [Azure Account Setup Guide](./AzureAccountSetUp.md).
 
@@ -152,14 +158,18 @@ Select one of the following options to deploy the solution:
 | **[GitHub Actions](#option-e-github-actions)** | Azure service principal | Federated identity, automated deployment |
 | **[Visual Studio Code Web](#option-f-visual-studio-code-web)** | Web browser | Pre-configured tools, session timeouts |
 
-### Option A: GitHub Codespaces
+<details>
+<summary><b>Option A: GitHub Codespaces</b></summary>
 
 1. Go to the [Real-Time Intelligence Operations repository in GitHub Codespaces](https://codespaces.new/microsoft/real-time-intelligence-operations-solution-accelerator)
 2. Follow the instructions on screen to create a new codespace with default setup.
 2. Wait for the environment to initialize (2-3 minutes)
 3. All tools are pre-installed; proceed to [Step 4: Deploy](#step-4-deploy-the-solution)
 
-### Option B: VS Code Dev Container
+</details>
+
+<details>
+<summary><b>Option B: VS Code Dev Container</b></summary>
 
 **Consistent development environment using Docker.**
 
@@ -177,7 +187,10 @@ Select one of the following options to deploy the solution:
 6. Click "Reopen in Container" when prompted
 7. All tools are pre-installed; proceed to [Step 4: Deploy](#step-4-deploy-the-solution)
 
-### Option C: Local Machine
+</details>
+
+<details>
+<summary><b>Option C: Local Machine</b></summary>
 
 **Full control with your local development environment.**
 
@@ -191,7 +204,10 @@ Select one of the following options to deploy the solution:
 
 3. Proceed to [Step 4: Deploy](#step-4-deploy-the-solution)
 
-### Option D: Azure Cloud Shell
+</details>
+
+<details>
+<summary><b>Option D: Azure Cloud Shell</b></summary>
 
 **Deploy from your browser—no local setup required.**
 
@@ -212,7 +228,10 @@ Select one of the following options to deploy the solution:
 
 5. Proceed to [Step 4: Deploy](#step-4-deploy-the-solution)
 
-### Option E: GitHub Actions
+</details>
+
+<details>
+<summary><b>Option E: GitHub Actions</b></summary>
 
 **Automated CI/CD deployment using GitHub Actions.**
 
@@ -231,7 +250,10 @@ Select one of the following options to deploy the solution:
 7. Click **Run workflow** and select your branch
 8. Monitor the deployment progress in the Actions tab
 
-### Option F: Visual Studio Code Web
+</details>
+
+<details>
+<summary><b>Option F: Visual Studio Code Web</b></summary>
 
 **Deploy from your browser—no local setup required.**
 
@@ -265,68 +287,47 @@ Select one of the following options to deploy the solution:
 
 7. Proceed to deployment: [Step 4: Deploy](#step-4-deploy-the-solution)
 
+</details>
+
 ---
 
-## Step 3: Configure Deployment Settings - Advanced Configuration
+## Step 3: Configure Deployment Settings (Optional)
 
-> **ℹ️ Optional Step:** This step is optional and only needed if you want to customize your deployment.
->
-> **When to do this step:**
->
-> - You want to use custom names for workspace or components
-> - You need to specify workspace administrators
-> - You want to configure alert email addresses
-> - You plan to use an existing Fabric capacity (cost optimization)
->
-> **If you want a standard deployment with defaults:** Skip directly to [Step 4: Deploy the Solution](#step-4-deploy-the-solution).
+> **Skip to [Step 4](#step-4-deploy-the-solution) if you want to use default settings.**
 
-Review these configuration options before deploying. You can use default values or customize as needed.
+Customize your deployment by setting environment variables before running `azd up`.
 
-### 3.1 Environment Variables (Optional)
+### Common Configurations
 
-Set these variables before running `azd up` to customize your deployment:
-
-**Workspace Configuration:**
-
-```bash
-azd env set FABRIC_WORKSPACE_NAME "My RTI Workspace"
-azd env set FABRIC_WORKSPACE_ADMINISTRATORS "user@company.com,another-user@company.com"
-```
-
-**Component Names:**
-
-```bash
-azd env set FABRIC_EVENTHOUSE_NAME "my_custom_eventhouse"
-azd env set FABRIC_EVENTHOUSE_DATABASE_NAME "my_custom_kql_db"
-azd env set FABRIC_EVENT_HUB_CONNECTION_NAME "my_eventhub_connection"
-azd env set FABRIC_RTIDASHBOARD_NAME "My Custom Dashboard"
-azd env set FABRIC_EVENTSTREAM_NAME "my_custom_eventstream"
-azd env set FABRIC_ACTIVATOR_NAME "my_custom_activator"
-azd env set FABRIC_DATA_AGENT_NAME "my_custom_dataagent"
-azd env set FABRIC_DATA_AGENT_CONFIGURATION_FOLDER_NAME "my_custom_folder"
-azd env set FABRIC_DATA_AGENT_CONFIGURATION_ENVIRONMENT_NAME "my_custom_environment"
-azd env set FABRIC_DATA_AGENT_CONFIGURATION_NOTEBOOK_NAME "my_custom_notebook"
-```
-
-**Alert Configuration:**
+**Set alert email (recommended):**
 
 ```bash
 azd env set FABRIC_ACTIVATOR_ALERTS_EMAIL "myteam@company.com"
 ```
 
-**Use Existing Azure Resources:**
+**Use existing Azure/Fabric resources:**
 
 If you already have Azure resources that you want to reuse instead of creating new ones, set these environment variables before running `azd up`:
 
+> **IMPORTANT:** Choose the correct deployment resource group when reusing Event Hub resources.
+>
+> `azd up` will always ask for a subscription and resource group (unless already set). To avoid “Event Hub not found” errors, deploy into the **same** resource group that contains your existing Event Hub Namespace.
+>
+> You can do this in either way:
+> - **Recommended:** When prompted during `azd up`, select the **existing Event Hub** resource group.
+> - **Automation-friendly:** Pre-set `AZURE_RESOURCE_GROUP` to the existing Event Hub resource group before running `azd up`.
+
 ```bash
 # Option 1: Use existing Event Hub Namespace AND create a new Event Hub in it
+# (Deployment RG MUST be the same RG where the namespace exists.)
 azd env set EXISTING_EVENT_HUB_NAMESPACE_NAME "my-existing-eventhub-namespace"
 
 # Option 2: Use existing Event Hub Namespace AND existing Event Hub
+# (Deployment RG MUST be the same RG where the namespace/event hub exist.)
 azd env set EXISTING_EVENT_HUB_NAMESPACE_NAME "my-existing-eventhub-namespace"
 azd env set EXISTING_EVENT_HUB_NAME "my-existing-eventhub"
 
-# Use an existing Fabric Capacity
+# Use an existing Fabric Capacity (looked up by name across your tenant)
 azd env set EXISTING_FABRIC_CAPACITY_NAME "my-existing-fabric-capacity"
 
 # Use an existing Fabric Workspace (provide the exact workspace name)
@@ -335,50 +336,33 @@ azd env set FABRIC_WORKSPACE_NAME "My Existing Workspace Name"
 
 > **Note:** When using existing resources:
 >
-> - The existing Event Hub Namespace must be in the same resource group as the deployment
-> - The existing Fabric Capacity must be in the same resource group as the deployment
+> - `azd` always deploys to a single resource group; if you reuse an existing Event Hub Namespace, deploy to the RG that contains it.
+> - Fabric Capacity is looked up by name across your tenant (no resource group needed)
 > - For existing Fabric Workspace, provide the exact workspace name - the deployment will detect and reuse it
+>   - The workspace must already be assigned to the capacity you select (the template does not change capacity assignment automatically)
 > - Ensure you have appropriate permissions on the existing resources
 > - If only `EXISTING_EVENT_HUB_NAMESPACE_NAME` is set, a new Event Hub will be created in that existing namespace
 > - If both `EXISTING_EVENT_HUB_NAMESPACE_NAME` and `EXISTING_EVENT_HUB_NAME` are set, both existing resources will be used
 > - You can mix and match: use an existing workspace but create new Azure resources, or vice versa
 
-### 3.2 Configuration Reference
+<details>
+<summary><b>All configuration variables</b></summary>
 
-#### Customizable Variables
+**Customizable Variables:**
 
-| Variable | Description | Default Value |
+| Variable | Description | Default |
 |----------|-------------|---|
-| `FABRIC_WORKSPACE_NAME` | Fabric workspace name (if exists, will be reused) | `Real-Time Intelligence for Operations - <env-name><suffix>` |
-| `FABRIC_WORKSPACE_ADMINISTRATORS` | Workspace admins (comma-separated identities) | None |
-| `FABRIC_EVENTHOUSE_NAME` | Eventhouse name | `rti_eventhouse_<env-name><suffix>` |
-| `FABRIC_EVENTHOUSE_DATABASE_NAME` | KQL database name | `rti_kqldb_<env-name><suffix>` |
-| `FABRIC_EVENT_HUB_CONNECTION_NAME` | Event Hub connection name | `rti_eventhub_connection_<env-name><suffix>` |
-| `FABRIC_RTIDASHBOARD_NAME` | Real-time dashboard name | `rti_dashboard_<env-name><suffix>` |
-| `FABRIC_EVENTSTREAM_NAME` | Eventstream name | `rti_eventstream_<env-name><suffix>` |
-| `FABRIC_ACTIVATOR_NAME` | Activator name | `rti_activator_<env-name><suffix>` |
+| `FABRIC_WORKSPACE_NAME` | Workspace name (reused if exists) | `Real-Time Intelligence for Operations - <env-name><suffix>` |
+| `FABRIC_WORKSPACE_ADMINISTRATORS` | Workspace admins (comma-separated) | None |
 | `FABRIC_ACTIVATOR_ALERTS_EMAIL` | Alert email address | `alerts@contoso.com` |
-| `FABRIC_DATA_AGENT_NAME` | Data Agent name | `rti_dataagent_<env-name><suffix>` |
-| `FABRIC_DATA_AGENT_CONFIGURATION_FOLDER_NAME` | Folder name for organizing data agent configuration components | `rti_dataagentconfig_<env-name><suffix>` |
-| `FABRIC_DATA_AGENT_CONFIGURATION_ENVIRONMENT_NAME` | Environment name with the python libraries required to configure data agent | `rti_environment_<env-name><suffix>` |
-| `FABRIC_DATA_AGENT_CONFIGURATION_NOTEBOOK_NAME` | Notebook to set up the Data Agent configuration | `rti_notebook_<env-name><suffix>` |
-| `EXISTING_EVENT_HUB_NAMESPACE_NAME` | Name of existing Event Hub Namespace (new Event Hub created if `EXISTING_EVENT_HUB_NAME` not set) | None |
-| `EXISTING_EVENT_HUB_NAME` | Name of existing Event Hub (optional, requires `EXISTING_EVENT_HUB_NAMESPACE_NAME`) | None |
-| `EXISTING_FABRIC_CAPACITY_NAME` | Name of existing Fabric Capacity to use (skips creation) | None |
+| `EXISTING_FABRIC_CAPACITY_NAME` | Existing Fabric Capacity to reuse | None |
+| `EXISTING_EVENT_HUB_NAMESPACE_NAME` | Existing Event Hub Namespace | None |
+| `EXISTING_EVENT_HUB_NAME` | Existing Event Hub | None |
+| `AZURE_RESOURCE_GROUP` | Target resource group | Prompted during deployment |
 
-#### System-Managed Variables
 
-These are automatically set by the deployment:
 
-| Variable | Description |
-|----------|-------------|
-| `AZURE_ENV_NAME` | Environment name (used in resource naming) |
-| `AZURE_SUBSCRIPTION_ID` | Azure subscription ID |
-| `AZURE_RESOURCE_GROUP` | Azure resource group name |
-| `AZURE_FABRIC_CAPACITY_NAME` | Fabric capacity name |
-| `AZURE_EVENT_HUB_NAME` | Event Hub name |
-| `AZURE_EVENT_HUB_NAMESPACE_NAME` | Event Hub namespace name |
-| `SOLUTION_SUFFIX` | Suffix appended to resource names |
+</details>
 
 ---
 
@@ -490,15 +474,7 @@ After `azd up` completes successfully:
 
 > **Preview Feature Notice:** If the Data Agent setup fails during deployment (step 14), the core Real-Time Intelligence functionality will still work. You can complete the Data Agent setup manually using the [Fabric Data Agent Guide](./FabricDataAgentGuide.md).
 
-**What You Get:**
-
-- Complete real-time analytics platform with Event Hub, Fabric Eventhouse, KQL database
-- Sample data pre-loaded for testing and demonstration
-- Real-time dashboards for operational monitoring
-- Automated alerting with Activator for anomaly detection
-- Eventstream for data pipeline orchestration
-- AI-powered Data Agent for conversational queries
-- Fabric runbook and environment for Data Agent configuration
+**Next:** See [Step 6: Deployment Results](#step-6-deployment-results) for details on all deployed resources.
 
 ---
 
@@ -736,6 +712,8 @@ If automated cleanup fails:
 ---
 
 ## Known Issues and Troubleshooting
+
+For common deployment problems and quick fixes (including Fabric workspace/capacity mismatches), see [Troubleshooting.md](Troubleshooting.md).
 
 ### Fabric REST API Permission Issues
 

@@ -1,6 +1,10 @@
 metadata name = 'Real-time Ingestion Fabric Solution Accelerator'
 metadata description = '''SAS Gold Standard Solution Accelerator for Real-time Ingestion with Fabric.
 '''
+
+// ============================================================================
+// PARAMETERS
+// ============================================================================
 @minLength(1)
 @maxLength(20)
 @description('Optional. A friendly string representing the application/solution name to give to all resource names in this deployment. This should be 3-16 characters long.')
@@ -45,8 +49,8 @@ param tags resourceInput<'Microsoft.Resources/resourceGroups@2025-04-01'>.tags =
 
 // ============================================================================
 // EXISTING RESOURCE PARAMETERS
-// When these are provided, the deployment will use existing resources instead
-// of creating new ones. Set these via azd env set before running azd up.
+// When provided, the deployment uses existing resources instead of creating new
+// ones. These are expected to be set via `azd env set` before `azd up`.
 // ============================================================================
 
 @description('Optional. Name of an existing Event Hub Namespace to use. When provided, a new Event Hub Namespace will not be created.')
@@ -55,17 +59,21 @@ param existingEventHubNamespaceName string = ''
 @description('Optional. Name of an existing Event Hub within the namespace to use. When provided along with existingEventHubNamespaceName, a new Event Hub will not be created.')
 param existingEventHubName string = ''
 
-@description('Optional. Resource group name where the existing Event Hub Namespace is located. Required when using existingEventHubNamespaceName that is in a different resource group.')
-param existingEventHubResourceGroupName string = ''
-
 @description('Optional. Name of an existing Fabric Capacity to use. When provided, a new Fabric Capacity will not be created.')
 param existingFabricCapacityName string = ''
 
+// ============================================================================
+// VARIABLES
+// ============================================================================
+
+// ============================================================================
 // Determine whether to use existing resources
 // Scenarios:
 // 1. Create new namespace + new event hub: neither existingEventHubNamespaceName nor existingEventHubName set
 // 2. Use existing namespace, create new event hub: only existingEventHubNamespaceName set
 // 3. Use existing namespace + existing event hub: both set
+// ============================================================================
+
 var useExistingEventHubNamespace = !empty(existingEventHubNamespaceName)
 var useExistingEventHub = !empty(existingEventHubNamespaceName) && !empty(existingEventHubName)
 var useExistingFabricCapacity = !empty(existingFabricCapacityName)
@@ -96,6 +104,10 @@ resource resourceGroupTags 'Microsoft.Resources/tags@2021-04-01' = {
   }
 }
 
+// ============================================================================
+// EVENT HUB (Azure)
+// ============================================================================
+
 var eventHubNamespaceName = useExistingEventHubNamespace ? existingEventHubNamespaceName : 'evhns${solutionSuffix}'
 var eventHubName = useExistingEventHub ? existingEventHubName : 'evh${solutionSuffix}'
 
@@ -113,8 +125,8 @@ resource newEventHubInExistingNamespace 'Microsoft.EventHub/namespaces/eventhubs
   }
 }
 
-// Create new Event Hub Namespace with Event Hub when not using existing namespace
-module eventHubNamespace 'br/public:avm/res/event-hub/namespace:0.13.0' = if (!useExistingEventHubNamespace) {
+// Create a new Event Hub Namespace with an Event Hub when not using an existing namespace.
+module eventHubNamespaceModule 'br/public:avm/res/event-hub/namespace:0.13.0' = if (!useExistingEventHubNamespace) {
   name: take('avm.res.event-hub.namespace.${eventHubNamespaceName}', 64)
   params: {
     name: eventHubNamespaceName
@@ -138,6 +150,10 @@ module eventHubNamespace 'br/public:avm/res/event-hub/namespace:0.13.0' = if (!u
   }
 }
 
+// ============================================================================
+// FABRIC CAPACITY (Azure)
+// ============================================================================
+
 var fabricCapacityResourceName = useExistingFabricCapacity ? existingFabricCapacityName : 'fc${solutionSuffix}'
 var fabricCapacityDefaultAdmins = deployer().?userPrincipalName == null
   ? [deployer().objectId]
@@ -156,6 +172,10 @@ module fabricCapacity 'br/public:avm/res/fabric/capacity:0.1.2' = if (!useExisti
   }
 }
 
+// ============================================================================
+// OUTPUTS
+// ============================================================================
+
 @description('The location the resources were deployed to')
 output AZURE_LOCATION string = location
 
@@ -170,10 +190,10 @@ output AZURE_FABRIC_CAPACITY_NAME string = useExistingFabricCapacity ? existingF
 output AZURE_FABRIC_CAPACITY_ADMINISTRATORS array = fabricTotalAdminMembers
 
 @description('The name of the Event Hub Namespace for ingestion.')
-output AZURE_EVENT_HUB_NAMESPACE_NAME string = useExistingEventHubNamespace ? existingEventHubNamespaceName : eventHubNamespace!.outputs.name
+output AZURE_EVENT_HUB_NAMESPACE_NAME string = useExistingEventHubNamespace ? existingEventHubNamespaceName : eventHubNamespaceModule!.outputs.name
 
 @description('The hostname of the Event Hub Namespace for ingestion.')
-output AZURE_EVENT_HUB_NAMESPACE_HOSTNAME string = useExistingEventHubNamespace ? '${existingEventHubNamespaceName}.servicebus.windows.net' : '${eventHubNamespace!.outputs.name}.servicebus.windows.net'
+output AZURE_EVENT_HUB_NAMESPACE_HOSTNAME string = useExistingEventHubNamespace ? '${existingEventHubNamespaceName}.servicebus.windows.net' : '${eventHubNamespaceModule!.outputs.name}.servicebus.windows.net'
 
 @description('The name of the Event Hub for ingestion.')
 output AZURE_EVENT_HUB_NAME string = eventHubName
@@ -191,4 +211,4 @@ output USING_EXISTING_EVENT_HUB bool = useExistingEventHub
 output USING_EXISTING_FABRIC_CAPACITY bool = useExistingFabricCapacity
 
 @description('The resource group name where the Event Hub Namespace is located.')
-output AZURE_EVENT_HUB_RESOURCE_GROUP string = useExistingEventHubNamespace && !empty(existingEventHubResourceGroupName) ? existingEventHubResourceGroupName : resourceGroup().name
+output AZURE_EVENT_HUB_RESOURCE_GROUP string = resourceGroup().name

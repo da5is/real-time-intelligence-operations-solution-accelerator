@@ -9,7 +9,7 @@ variables for configuration and calls each function directly.
 Functions executed in order:
 1. setup_workspace - Create and configure Fabric workspace
 2. setup_workspace_administrators - Add workspace administrators
-3. setup_eventhouse - Set up Eventhouse in the workspace  
+3. setup_eventhouse - Set up Eventhouse in the workspace
 4. setup_fabric_database - Set up database tables and schema
 5. load_data_to_fabric - Load sample data into Fabric
 6. setup_eventhub_connection - Configure Event Hub connection
@@ -17,10 +17,12 @@ Functions executed in order:
 8. create_eventstream - Create Eventstream (empty)
 9. create_activator - Create Activator (empty)
 10. setup_activator_definition - Configure Activator (Reflex) for real-time alerts
-11. setup_eventstream_definition - Configure Eventstream with Event Hub to Eventhouse flow
-13. setup_folder - Create folder for organizing environment and data agent
-14. setup_environment - Set up Fabric Environment in the created folder
-15. setup_data_agent - Create and configure Data Agent (Preview) with notebook in the folder
+11. setup_eventstream_definition - Configure Eventstream with Event Hub to Eventhouse
+    flow
+12. setup_folder - Create folder for organizing environment and data agent
+13. setup_environment - Set up Fabric Environment in the created folder
+14. setup_data_agent - Create and configure Data Agent (Preview) with notebook in the
+    folder
 
 Usage:
     python deploy_fabric_rti.py
@@ -31,27 +33,44 @@ Environment Variables (from Bicep outputs):
     AZURE_SUBSCRIPTION_ID - The Azure subscription ID (from azd environment)
     AZURE_ENV_NAME - The azd environment name (used as solution name)
     AZURE_FABRIC_CAPACITY_NAME - The name of the Fabric capacity resource
-    AZURE_FABRIC_CAPACITY_ADMINISTRATORS - The identities added as Fabric Capacity Admin members
-    AZURE_EVENT_HUB_NAMESPACE_NAME - The name of the Event Hub Namespace created for ingestion
-    AZURE_EVENT_HUB_NAMESPACE_HOSTNAME - The hostname of the Event Hub Namespace created for ingestion  
+    AZURE_FABRIC_CAPACITY_ADMINISTRATORS - The identities added as Fabric Capacity
+        Admin members
+    AZURE_EVENT_HUB_NAMESPACE_NAME - The name of the Event Hub Namespace created
+        for ingestion
+    AZURE_EVENT_HUB_NAMESPACE_HOSTNAME - The hostname of the Event Hub Namespace
+        created for ingestion  
     AZURE_EVENT_HUB_NAME - The name of the Event Hub created for ingestion
-    AZURE_EVENT_HUB_AUTHORIZATION_RULE_NAME - Event Hub authorization rule name (optional, defaults to "RootManageSharedAccessKey")
+    AZURE_EVENT_HUB_AUTHORIZATION_RULE_NAME - Event Hub authorization rule name
+        (optional, defaults to "RootManageSharedAccessKey")
     SOLUTION_SUFFIX - The solution name suffix used for resource naming
     
 Optional Environment Variables (custom configuration):
-    FABRIC_WORKSPACE_NAME - Custom name for the Fabric workspace (defaults to "Real-Time Intelligence for Operations - {suffix}")
-    FABRIC_WORKSPACE_ADMINISTRATORS - Comma-separated list of workspace administrator identities (UPNs or GUIDs, optional)
-    FABRIC_EVENTHOUSE_NAME - Custom name for the Eventhouse (defaults to "rti_eventhouse_{suffix}")
-    FABRIC_EVENTHOUSE_DATABASE_NAME - Custom name for the Eventhouse database (defaults to "rti_kqldb_{suffix}")
-    FABRIC_EVENT_HUB_CONNECTION_NAME - Custom name for the Event Hub connection (defaults to "rti_eventhub_connection_{suffix}")
-    FABRIC_RTIDASHBOARD_NAME - Custom name for the real-time dashboard (defaults to "rti_dashboard_{suffix}")
-    FABRIC_EVENTSTREAM_NAME - Custom name for the Eventstream (defaults to "rti_eventstream_{suffix}")
-    FABRIC_ACTIVATOR_NAME - Custom name for the Activator (defaults to "rti_activator_{suffix}")
-    FABRIC_ACTIVATOR_ALERTS_EMAIL - Email address for activator alerts (defaults to "alerts@contoso.com")
-    FABRIC_ENVIRONMENT_NAME - Custom name for the Environment (defaults to "rti_environment_{suffix}")
-    FABRIC_DATA_AGENT_NAME - Custom name for the Data Agent (defaults to "rti_dataagent_{suffix}")
-    FABRIC_NOTEBOOK_NAME - Custom name for the Data Agent configuration notebook (defaults to "rti_notebook_{suffix}")
-    FABRIC_FOLDER_NAME - Custom name for the folder containing environment and data agent (defaults to "rti_folder_{suffix}")
+    FABRIC_WORKSPACE_NAME - Custom name for the Fabric workspace 
+        (defaults to "Real-Time Intelligence for Operations - {suffix}")
+    FABRIC_WORKSPACE_ADMINISTRATORS - Comma-separated list of workspace administrator
+        identities (UPNs or GUIDs, optional)
+    FABRIC_EVENTHOUSE_NAME - Custom name for the Eventhouse
+        (defaults to "rti_eventhouse_{suffix}")
+    FABRIC_EVENTHOUSE_DATABASE_NAME - Custom name for the Eventhouse database
+        (defaults to "rti_kqldb_{suffix}")
+    FABRIC_EVENT_HUB_CONNECTION_NAME - Custom name for the Event Hub connection
+        (defaults to "rti_eventhub_connection_{suffix}")
+    FABRIC_RTIDASHBOARD_NAME - Custom name for the real-time dashboard
+        (defaults to "rti_dashboard_{suffix}")
+    FABRIC_EVENTSTREAM_NAME - Custom name for the Eventstream
+        (defaults to "rti_eventstream_{suffix}")
+    FABRIC_ACTIVATOR_NAME - Custom name for the Activator
+      (defaults to "rti_activator_{suffix}")
+    FABRIC_ACTIVATOR_ALERTS_EMAIL - Email address for activator alerts
+      (defaults to "alerts@contoso.com")
+    FABRIC_ENVIRONMENT_NAME - Custom name for the Environment
+      (defaults to "rti_environment_{suffix}")
+    FABRIC_DATA_AGENT_NAME - Custom name for the Data Agent
+      (defaults to "rti_dataagent_{suffix}")
+    FABRIC_NOTEBOOK_NAME - Custom name for the Data Agent configuration notebook
+      (defaults to "rti_notebook_{suffix}")
+    FABRIC_FOLDER_NAME - Custom name for the folder containing environment and
+      data agent (defaults to "rti_folder_{suffix}")
 """
 
 import os
@@ -93,8 +112,13 @@ def main():
     capacity_name = get_required_env_var("AZURE_FABRIC_CAPACITY_NAME")
     event_hub_name = get_required_env_var("AZURE_EVENT_HUB_NAME")
     event_hub_namespace_name = get_required_env_var("AZURE_EVENT_HUB_NAMESPACE_NAME")
-    # Event Hub resource group (defaults to main resource group if not specified)
-    event_hub_resource_group_name = os.getenv("AZURE_EVENT_HUB_RESOURCE_GROUP", resource_group_name)
+    # Event Hub resource group resolution
+    # Prefer Bicep output (AZURE_EVENT_HUB_RESOURCE_GROUP). Otherwise default to
+    # the deployment resource group.
+    event_hub_resource_group_name = (
+        os.getenv("AZURE_EVENT_HUB_RESOURCE_GROUP")
+        or resource_group_name
+    )
     event_hub_authorization_rule_name = os.getenv("AZURE_EVENT_HUB_AUTHORIZATION_RULE_NAME", "RootManageSharedAccessKey")
     workspace_name = os.getenv("FABRIC_WORKSPACE_NAME", f"Real-Time Intelligence for Operations - {solution_suffix}")
     workspace_administrators = os.getenv("FABRIC_WORKSPACE_ADMINISTRATORS")
@@ -109,6 +133,9 @@ def main():
     folder_name = os.getenv("FABRIC_DATA_AGENT_CONFIGURATION_FOLDER_NAME", f"rti_dataagentconfig_{solution_suffix}")
     environment_name = os.getenv("FABRIC_DATA_AGENT_CONFIGURATION_ENVIRONMENT_NAME", f"rti_environment_{solution_suffix}")
     notebook_name = os.getenv("FABRIC_DATA_AGENT_CONFIGURATION_NOTEBOOK_NAME", f"rti_notebook_{solution_suffix}")
+
+    # Note: This solution expects deployments that reuse existing Event Hub resources
+    # to target the same Azure Resource Group where those resources live.
     
     # Show initialization summary
     print(f"🏭 {solution_name} Initialization")
