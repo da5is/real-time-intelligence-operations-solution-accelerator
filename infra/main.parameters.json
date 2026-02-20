@@ -5,11 +5,8 @@
     "solutionName": {
       "value": "${AZURE_ENV_NAME}"
     },
-    "existingEventHubNamespaceName": {
-      "value": "${EXISTING_EVENT_HUB_NAMESPACE_NAME}"
-    },
-    "existingEventHubName": {
-      "value": "${EXISTING_EVENT_HUB_NAME}"
+    "existingEventHubNamespaceId": {
+      "value": "${EXISTING_EVENT_HUB_NAMESPACE_ID}"
     },
     "existingFabricCapacityName": {
       "value": "${EXISTING_FABRIC_CAPACITY_NAME}"

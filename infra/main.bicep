@@ -53,11 +53,8 @@ param tags resourceInput<'Microsoft.Resources/resourceGroups@2025-04-01'>.tags =
 // ones. These are expected to be set via `azd env set` before `azd up`.
 // ============================================================================
 
-@description('Optional. Name of an existing Event Hub Namespace to use. When provided, a new Event Hub Namespace will not be created.')
-param existingEventHubNamespaceName string = ''
-
-@description('Optional. Name of an existing Event Hub to use. MUST be used together with existingEventHubNamespaceName. This parameter is ignored if existingEventHubNamespaceName is not set.')
-param existingEventHubName string = ''
+@description('Optional. Resource ID of an existing Event Hub Namespace to use. When provided, a new Event Hub Namespace will not be created. A new Event Hub will always be created in either the existing or new namespace.')
+param existingEventHubNamespaceId string = ''
 
 @description('Optional. Name of an existing Fabric Capacity to use. When provided, a new Fabric Capacity will not be created.')
 param existingFabricCapacityName string = ''
@@ -69,16 +66,21 @@ param existingFabricCapacityName string = ''
 // ============================================================================
 // Determine whether to use existing resources
 // Scenarios:
-// 1. Create new namespace + new event hub: neither existingEventHubNamespaceName nor existingEventHubName set
-// 2. Use existing namespace, create new event hub: only existingEventHubNamespaceName set
-// 3. Use existing namespace + existing event hub: both set
+// 1. Create new namespace + new event hub: existingEventHubNamespaceId not set
+// 2. Use existing namespace, create new event hub: existingEventHubNamespaceId is set
 //
-// IMPORTANT: existingEventHubName requires existingEventHubNamespaceName to be set.
-// If only existingEventHubName is provided, it will be ignored and a new namespace will be created.
+// NOTE: A new Event Hub is always created to avoid mixing unrelated event types.
+// This follows best practices for Event Hub usage.
 // ============================================================================
 
-var useExistingEventHubNamespace = !empty(existingEventHubNamespaceName)
-var useExistingEventHub = !empty(existingEventHubNamespaceName) && !empty(existingEventHubName)
+var useExistingEventHubNamespace = !empty(existingEventHubNamespaceId)
+// Extract namespace name from resource ID if using existing, otherwise generate new name
+var eventHubNamespaceNameFromId = useExistingEventHubNamespace ? last(split(existingEventHubNamespaceId, '/')) : ''
+// Parse subscription ID and resource group from the namespace resource ID
+// This enables cross-subscription and cross-resource-group deployments
+// Example: namespace in sub-123/rg-shared while deploying to sub-456/rg-demo
+var eventHubNamespaceSubscriptionId = useExistingEventHubNamespace ? split(existingEventHubNamespaceId, '/')[2] : ''
+var eventHubNamespaceResourceGroup = useExistingEventHubNamespace ? split(existingEventHubNamespaceId, '/')[4] : ''
 var useExistingFabricCapacity = !empty(existingFabricCapacityName)
 
 var solutionSuffix = toLower(trim(replace(
@@ -111,32 +113,23 @@ resource resourceGroupTags 'Microsoft.Resources/tags@2021-04-01' = {
 // EVENT HUB (Azure)
 // ============================================================================
 
-var eventHubNamespaceName = useExistingEventHubNamespace ? existingEventHubNamespaceName : 'evhns${solutionSuffix}'
-var eventHubName = useExistingEventHub ? existingEventHubName : 'evh${solutionSuffix}'
+var eventHubNamespaceName = useExistingEventHubNamespace ? eventHubNamespaceNameFromId : 'evhns${solutionSuffix}'
+// Always create a new Event Hub to avoid mixing unrelated event types (best practice)
+var eventHubName = 'evh${solutionSuffix}'
 
-// Reference existing Event Hub Namespace (for creating new Event Hub or when using existing Event Hub)
-resource existingEventHubNamespaceRef 'Microsoft.EventHub/namespaces@2024-01-01' existing = if (useExistingEventHubNamespace) {
-  name: existingEventHubNamespaceName
-}
-
-// Create new Event Hub in existing namespace (when namespace exists but event hub doesn't)
-resource newEventHubInExistingNamespace 'Microsoft.EventHub/namespaces/eventhubs@2024-01-01' = if (useExistingEventHubNamespace && !useExistingEventHub) {
-  parent: existingEventHubNamespaceRef
-  name: eventHubName
-  properties: {
+// Deploy Event Hub to existing namespace (supports cross-subscription/cross-RG scenarios)
+// The module is deployed to the namespace's actual location, which may be:
+//   - Different resource group in same subscription
+//   - Different subscription entirely
+// Bicep requires a module for cross-scope deployments
+module eventHubCrossScope 'modules/event-hub.bicep' = if (useExistingEventHubNamespace) {
+  name: take('event-hub-${eventHubName}', 64)
+  scope: resourceGroup(eventHubNamespaceSubscriptionId, eventHubNamespaceResourceGroup)
+  params: {
+    namespaceName: eventHubNamespaceNameFromId
+    eventHubName: eventHubName
+    userObjectId: userObjectId
     messageRetentionInDays: 1
-  }
-}
-
-// Grant Event Hub Data Sender role to the deploying user when using existing namespace
-// This ensures the event simulator works regardless of whether Event Hub is new or existing
-resource eventHubRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (useExistingEventHubNamespace) {
-  name: guid(existingEventHubNamespaceRef.id, userObjectId, 'Azure Event Hubs Data Sender')
-  scope: existingEventHubNamespaceRef
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '2b629674-e913-4c01-ae53-ef4638d8f975') // Azure Event Hubs Data Sender
-    principalId: userObjectId
-    principalType: 'User'
   }
 }
 
@@ -204,13 +197,17 @@ output AZURE_FABRIC_CAPACITY_NAME string = useExistingFabricCapacity ? existingF
 @description('The identities added as Fabric Capacity Admin members')
 output AZURE_FABRIC_CAPACITY_ADMINISTRATORS array = fabricTotalAdminMembers
 
+@description('The resource ID of the Event Hub Namespace for ingestion.')
+#disable-next-line BCP318
+output AZURE_EVENT_HUB_NAMESPACE_ID string = useExistingEventHubNamespace ? existingEventHubNamespaceId : eventHubNamespaceModule!.outputs.resourceId
+
 @description('The name of the Event Hub Namespace for ingestion.')
 #disable-next-line BCP318
-output AZURE_EVENT_HUB_NAMESPACE_NAME string = useExistingEventHubNamespace ? existingEventHubNamespaceName : eventHubNamespaceModule!.outputs.name
+output AZURE_EVENT_HUB_NAMESPACE_NAME string = useExistingEventHubNamespace ? eventHubNamespaceNameFromId : eventHubNamespaceModule!.outputs.name
 
 @description('The hostname of the Event Hub Namespace for ingestion.')
 #disable-next-line BCP318
-output AZURE_EVENT_HUB_NAMESPACE_HOSTNAME string = useExistingEventHubNamespace ? '${existingEventHubNamespaceName}.servicebus.windows.net' : '${eventHubNamespaceModule!.outputs.name}.servicebus.windows.net'
+output AZURE_EVENT_HUB_NAMESPACE_HOSTNAME string = useExistingEventHubNamespace ? '${eventHubNamespaceNameFromId}.servicebus.windows.net' : '${eventHubNamespaceModule!.outputs.name}.servicebus.windows.net'
 
 @description('The name of the Event Hub for ingestion.')
 output AZURE_EVENT_HUB_NAME string = eventHubName
@@ -221,11 +218,11 @@ output SOLUTION_SUFFIX string = solutionSuffix
 @description('Indicates whether an existing Event Hub Namespace was used.')
 output USING_EXISTING_EVENT_HUB_NAMESPACE bool = useExistingEventHubNamespace
 
-@description('Indicates whether an existing Event Hub was used.')
-output USING_EXISTING_EVENT_HUB bool = useExistingEventHub
-
 @description('Indicates whether existing Fabric Capacity was used.')
 output USING_EXISTING_FABRIC_CAPACITY bool = useExistingFabricCapacity
 
-@description('The resource group name where the Event Hub Namespace is located.')
-output AZURE_EVENT_HUB_RESOURCE_GROUP string = resourceGroup().name
+@description('The resource group name where the Event Hub Namespace is located. May differ from deployment RG when reusing namespace from different location.')
+output AZURE_EVENT_HUB_RESOURCE_GROUP string = useExistingEventHubNamespace ? eventHubNamespaceResourceGroup : resourceGroup().name
+
+@description('The subscription ID where the Event Hub Namespace is located. May differ from deployment subscription when reusing namespace from different subscription.')
+output AZURE_EVENT_HUB_SUBSCRIPTION_ID string = useExistingEventHubNamespace ? eventHubNamespaceSubscriptionId : subscription().subscriptionId

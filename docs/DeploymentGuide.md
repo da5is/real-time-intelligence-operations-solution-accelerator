@@ -295,59 +295,199 @@ Select one of the following options to deploy the solution:
 
 > **Skip to [Step 4](#step-4-deploy-the-solution) if you want to use default settings.**
 
-Customize your deployment by setting environment variables before running `azd up`.
+This section covers all optional configuration settings you can customize before deployment. You can configure:
+- Alert email addresses for notifications
+- Existing Azure/Fabric resources to reuse
+- Custom names for workspace and components
 
-### Common Configurations
+All settings are configured using `azd env set` commands before running `azd up`.
 
-**Set alert email (recommended):**
+---
+
+<details>
+<summary><b>3.1 Alert Email Configuration (Recommended)</b></summary>
+
+Set your email address to receive real-time alerts from Fabric Activator:
 
 ```bash
 azd env set FABRIC_ACTIVATOR_ALERTS_EMAIL "myteam@company.com"
 ```
 
-**Use existing Azure/Fabric resources:**
+</details>
 
-If you already have Azure resources that you want to reuse instead of creating new ones, set these environment variables before running `azd up`:
-
-> **IMPORTANT:** Choose the correct deployment resource group when reusing Event Hub resources.
->
-> `azd up` will always ask for a subscription and resource group (unless already set). To avoid “Event Hub not found” errors, deploy into the **same** resource group that contains your existing Event Hub Namespace.
->
-> You can do this in either way:
-> - **Recommended:** When prompted during `azd up`, select the **existing Event Hub** resource group.
-> - **Automation-friendly:** Pre-set `AZURE_RESOURCE_GROUP` to the existing Event Hub resource group before running `azd up`.
-
-```bash
-# Option 1: Use existing Event Hub Namespace AND create a new Event Hub in it
-# (Deployment RG MUST be the same RG where the namespace exists.)
-azd env set EXISTING_EVENT_HUB_NAMESPACE_NAME "my-existing-eventhub-namespace"
-
-# Option 2: Use existing Event Hub Namespace AND existing Event Hub
-# (Deployment RG MUST be the same RG where the namespace/event hub exist.)
-azd env set EXISTING_EVENT_HUB_NAMESPACE_NAME "my-existing-eventhub-namespace"
-azd env set EXISTING_EVENT_HUB_NAME "my-existing-eventhub"
-
-# Use an existing Fabric Capacity (looked up by name across your tenant)
-azd env set EXISTING_FABRIC_CAPACITY_NAME "my-existing-fabric-capacity"
-
-# Use an existing Fabric Workspace (provide the exact workspace name)
-azd env set FABRIC_WORKSPACE_NAME "My Existing Workspace Name"
-```
-
-> **Note:** When using existing resources:
->
-> - `azd` always deploys to a single resource group; if you reuse an existing Event Hub Namespace, deploy to the RG that contains it.
-> - **IMPORTANT:** `EXISTING_EVENT_HUB_NAME` requires `EXISTING_EVENT_HUB_NAMESPACE_NAME` to also be set (Event Hub name alone will be ignored)
-> - The deploying user is automatically granted \"Azure Event Hubs Data Sender\" role for the event simulator
-> - Fabric Capacity is looked up by name across your tenant (no resource group needed)
-> - For existing Fabric Workspace, provide the exact workspace name - the deployment will detect and reuse it
->   - The workspace must already be assigned to the capacity you select (the template does not change capacity assignment automatically)
-> - Ensure you have appropriate permissions on the existing resources
-> - If only `EXISTING_EVENT_HUB_NAMESPACE_NAME` is set, a new Event Hub will be created in that existing namespace
-> - If both `EXISTING_EVENT_HUB_NAMESPACE_NAME` and `EXISTING_EVENT_HUB_NAME` are set, both existing resources will be used
-> - You can mix and match: use an existing workspace but create new Azure resources, or vice versa
+---
 
 <details>
+<summary><b>3.2 Reuse Existing Azure/Fabric Resources</b></summary>
+
+If you already have Azure resources that you want to reuse instead of creating new ones, configure them here:
+
+#### Using an Existing Event Hub Namespace
+
+**Supported Scenarios:**
+- Reuse an Event Hub Namespace from the same resource group
+- Reuse an Event Hub Namespace from a different resource group  
+- Reuse an Event Hub Namespace from a different subscription
+
+The deployment will automatically:
+- Create a new Event Hub in your existing namespace (to avoid mixing event types)
+- Grant you permission to send events to the namespace
+- Handle cross-subscription and cross-resource group scenarios
+
+**Steps to Configure:**
+
+1. **Get the Resource ID** from Azure Portal or CLI:
+   - **Azure Portal:** Go to your Event Hub Namespace → Properties → Copy "Resource ID"
+   - **Azure CLI:** Run:
+     ```bash
+     az eventhubs namespace show --name <namespace-name> --resource-group <rg-name> --query id -o tsv
+     ```
+
+2. **Set the environment variable:**
+   ```bash
+   azd env set EXISTING_EVENT_HUB_NAMESPACE_ID "<resource-id-from-step-1>"
+   ```
+
+3. **During deployment**, select your  preferred resource group (can be same or different)
+
+**Example Resource ID Format:**
+```
+/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.EventHub/namespaces/{namespace-name}
+```
+
+<details>
+<summary><b>Example: Cross-Resource Group Deployment</b></summary>
+
+Your IT team manages a central Event Hub namespace that multiple teams share:
+
+```
+Corporate Event Hub Namespace:
+  Subscription: "Production" (sub-123)
+  Resource Group: "rg-corporate-eventhubs"
+  Namespace: "corporate-eventhub"
+
+Your RTI Deployment:
+  Subscription: "Development" (could be same or different)
+  Resource Group: "rg-my-rti-demo" ← You choose this!
+  
+✅ This works perfectly! The deployment creates a new Event Hub 
+   in the corporate namespace while deploying all other resources 
+   to your own resource group.
+```
+
+**Steps:**
+```bash
+# 1. Get the namespace Resource ID (from IT team or Azure Portal)
+azd env set EXISTING_EVENT_HUB_NAMESPACE_ID "/subscriptions/sub-123/resourceGroups/rg-corporate-eventhubs/providers/Microsoft.EventHub/namespaces/corporate-eventhub"
+
+# 2. Deploy to YOUR resource group (when prompted by azd up)
+azd up
+# → Select or create YOUR resource group: "rg-my-rti-demo"
+```
+
+</details>
+
+<details>
+<summary><b>Example: Same Resource Group Deployment</b></summary>
+
+You have an existing Event Hub namespace in a resource group and want to deploy everything there:
+
+```bash
+# Use the namespace Resource ID
+azd env set EXISTING_EVENT_HUB_NAMESPACE_ID "/subscriptions/abc-123/resourceGroups/rg-all-resources/providers/Microsoft.EventHub/namespaces/my-namespace"
+
+# During azd up, select the same resource group
+azd up
+# → Select resource group: "rg-all-resources"
+```
+
+</details>
+
+#### Using Other Existing Resources
+
+**Use an existing Fabric Capacity:**
+```bash
+azd env set EXISTING_FABRIC_CAPACITY_NAME "my-existing-fabric-capacity"
+```
+*Note: Looked up by name across your entire tenant*
+
+**Use an existing Fabric Workspace:**
+```bash
+azd env set FABRIC_WORKSPACE_NAME "My Existing Workspace Name"
+```
+*Note: Must match the exact workspace name*
+
+> **📌 Note:** When using existing resources (Event Hub Namespace or Fabric Capacity) from different resource groups, creating a new resource group during deployment will result in an **empty resource group**. Existing resources remain in their original locations. Consider deploying to the same resource group as your Event Hub Namespace for better resource organization.
+
+</details>
+
+---
+
+<details>
+<summary><b>3.3 Customize Resource Names (Optional)</b></summary>
+
+Configure custom names for your workspace and Fabric components. If not set, defaults will use your environment name and a generated suffix.
+
+**Workspace Configuration:**
+
+```bash
+azd env set FABRIC_WORKSPACE_NAME "My RTI Workspace"
+azd env set FABRIC_WORKSPACE_ADMINISTRATORS "user@company.com,12345678-1234-abcd-1234-123456789abc" # comma-separated
+```
+
+**Component Names:**
+
+```bash
+azd env set FABRIC_EVENTHOUSE_NAME "my_custom_eventhouse"
+azd env set FABRIC_EVENTHOUSE_DATABASE_NAME "my_custom_kql_db"
+azd env set FABRIC_EVENT_HUB_CONNECTION_NAME "my_eventhub_connection"
+azd env set FABRIC_RTIDASHBOARD_NAME "My Custom Dashboard"
+azd env set FABRIC_EVENTSTREAM_NAME "my_custom_eventstream"
+azd env set FABRIC_ACTIVATOR_NAME "my_custom_activator"
+azd env set FABRIC_DATA_AGENT_NAME "my_custom_dataagent"
+azd env set FABRIC_DATA_AGENT_CONFIGURATION_FOLDER_NAME "my_custom_folder"
+azd env set FABRIC_DATA_AGENT_CONFIGURATION_ENVIRONMENT_NAME "my_custom_environment"
+azd env set FABRIC_DATA_AGENT_CONFIGURATION_NOTEBOOK_NAME "my_custom_notebook"
+```
+
+</details>
+
+---
+
+<details>
+<summary><b>3.4 Required Permissions for Existing Resources</b></summary>
+
+When using an existing Event Hub Namespace **in a different resource group or subscription**, ensure you have:
+
+| Permission | Why It's Needed | How to Check |
+|------------|-----------------|--------------|
+| **Contributor** on the Event Hub Namespace | To create the new Event Hub and role assignment | Can you see and manage the namespace in Azure Portal? |
+| **Owner or User Access Administrator** on the namespace | To grant yourself "Data Sender" role | Can you modify Access Control (IAM) on the namespace? |
+
+> **💡 Tip:** If you don't have these permissions, ask your Azure administrator to:
+> 1. Pre-create an Event Hub for you in the namespace
+> 2. Grant you "Azure Event Hubs Data Sender" role on that Event Hub
+> 3. Then provide you the Event Hub details to use
+
+</details>
+
+---
+
+<details>
+<summary><b>3.5 Configuration Summary</b></summary>
+
+> ✅ **What's flexible:**
+> - Deploy the RTI solution to **any resource group** you choose
+> - Reuse Event Hub Namespace from **any resource group or subscription**
+> - Reuse Fabric Capacity from **anywhere in your tenant**
+>
+> ⚠️ **What you need:**
+> - Appropriate permissions on existing resources (see table above)
+> - Resource ID for Event Hub Namespace (not just the name)
+>
+> 🎯 **Best practice:**
+> - A new Event Hub is always created to avoid mixing unrelated event types
+> - You can mix and match: use existing workspace but new Azure resources, or vice versa
 <summary><b>All configuration variables</b></summary>
 
 **Customizable Variables:**
@@ -358,11 +498,8 @@ azd env set FABRIC_WORKSPACE_NAME "My Existing Workspace Name"
 | `FABRIC_WORKSPACE_ADMINISTRATORS` | Workspace admins (comma-separated) | None |
 | `FABRIC_ACTIVATOR_ALERTS_EMAIL` | Alert email address | `alerts@contoso.com` |
 | `EXISTING_FABRIC_CAPACITY_NAME` | Existing Fabric Capacity to reuse | None |
-| `EXISTING_EVENT_HUB_NAMESPACE_NAME` | Existing Event Hub Namespace | None |
-| `EXISTING_EVENT_HUB_NAME` | Existing Event Hub (requires namespace to be set) | None |
+| `EXISTING_EVENT_HUB_NAMESPACE_ID` | Existing Event Hub Namespace resource ID | None |
 | `AZURE_RESOURCE_GROUP` | Target resource group | Prompted during deployment |
-
-
 
 </details>
 
@@ -402,43 +539,14 @@ Additionally, authenticate with Azure CLI to enable the deployment script to acc
 az login
 ```
 
-### 4.3 Configure Alert Email (Recommended)
+### 4.3 Configure Settings (Optional)
 
-Set your email address to receive real-time alerts:
+> See [Step 3: Configure Deployment Settings](#step-3-configure-deployment-settings-optional) for all configuration options including:
+> - Alert email addresses
+> - Reusing existing Azure/Fabric resources
+> - Custom resource names
 
-```bash
-azd env set FABRIC_ACTIVATOR_ALERTS_EMAIL "myteam@company.com" # set email to receive alerts
-```
-
-### 4.4 Customize Resource Names (Optional)
-
-Configure custom names for your workspace and components:
-
-**Workspace Configuration:**
-
-```bash
-azd env set FABRIC_WORKSPACE_NAME "My RTI Workspace"
-azd env set FABRIC_WORKSPACE_ADMINISTRATORS "user@company.com,12345678-1234-abcd-1234-123456789abc" # comma-separated
-```
-
-**Component Names:**
-
-```bash
-azd env set FABRIC_EVENTHOUSE_NAME "my_custom_eventhouse"
-azd env set FABRIC_EVENTHOUSE_DATABASE_NAME "my_custom_kql_db"
-azd env set FABRIC_EVENT_HUB_CONNECTION_NAME "my_eventhub_connection"
-azd env set FABRIC_RTIDASHBOARD_NAME "My Custom Dashboard"
-azd env set FABRIC_EVENTSTREAM_NAME "my_custom_eventstream"
-azd env set FABRIC_ACTIVATOR_NAME "my_custom_activator"
-azd env set FABRIC_DATA_AGENT_NAME "my_custom_dataagent"
-azd env set FABRIC_DATA_AGENT_CONFIGURATION_FOLDER_NAME "my_custom_folder"
-azd env set FABRIC_DATA_AGENT_CONFIGURATION_ENVIRONMENT_NAME "my_custom_environment"
-azd env set FABRIC_DATA_AGENT_CONFIGURATION_NOTEBOOK_NAME "my_custom_notebook"
-```
-
-> **Note:** These are optional. If not set, defaults will use your environment name and a generated suffix.
-
-### 4.5 Start Deployment
+### 4.4 Start Deployment
 
 Run the deployment command:
 
@@ -777,3 +885,4 @@ Now that deployment is complete, explore these resources:
 - 📖 **FAQs:** Check [Frequently Asked Questions](./FAQs.md)
 
 ---
+
