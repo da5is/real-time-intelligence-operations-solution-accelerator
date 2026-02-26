@@ -57,7 +57,6 @@ var allTags = union(
   {
     'azd-env-name': solutionName
     TemplateName: 'Real-time Ingestion Fabric Solution Accelerator'
-    SecurityControl: 'Ignore' // TODO - temp tag to override MSFT subscription controls for testing
   },
   tags
 )
