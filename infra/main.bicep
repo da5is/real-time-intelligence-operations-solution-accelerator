@@ -93,11 +93,16 @@ var solutionSuffix = toLower(trim(replace(
   ''
 )))
 
+@description('Tag, Created by user name')
+param createdBy string = contains(deployer(), 'userPrincipalName')? split(deployer().userPrincipalName, '@')[0]: deployer().objectId
+
 var allTags = union(
   {
     'azd-env-name': solutionName
     TemplateName: 'Real-time Ingestion Fabric Solution Accelerator'
     SecurityControl: 'Ignore' // TODO - temp tag to override MSFT subscription controls for testing
+    CreatedBy: createdBy
+    Type: 'Non-WAF'
   },
   tags
 )
