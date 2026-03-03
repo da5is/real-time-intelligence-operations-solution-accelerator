@@ -74,13 +74,18 @@ param existingFabricCapacityName string = ''
 // ============================================================================
 
 var useExistingEventHubNamespace = !empty(existingEventHubNamespaceId)
-// Extract namespace name from resource ID if using existing, otherwise generate new name
-var eventHubNamespaceNameFromId = useExistingEventHubNamespace ? last(split(existingEventHubNamespaceId, '/')) : ''
-// Parse subscription ID and resource group from the namespace resource ID
-// This enables cross-subscription and cross-resource-group deployments
-// Example: namespace in sub-123/rg-shared while deploying to sub-456/rg-demo
-var eventHubNamespaceSubscriptionId = useExistingEventHubNamespace ? split(existingEventHubNamespaceId, '/')[2] : ''
-var eventHubNamespaceResourceGroup = useExistingEventHubNamespace ? split(existingEventHubNamespaceId, '/')[4] : ''
+// ARM eagerly evaluates both ternary branches at validation time, causing split('', '/')[n]
+// to throw index-out-of-bounds when the param is empty. Provide a structurally valid
+// placeholder so the split is always safe. The nil GUID can never match a real subscription.
+var _safeEventHubNamespaceId = empty(existingEventHubNamespaceId)
+  ? '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/placeholder/providers/Microsoft.EventHub/namespaces/placeholder'
+  : existingEventHubNamespaceId
+// Extract name, subscription ID, and resource group from the resource ID.
+// Supports cross-subscription/cross-resource-group deployments
+// (e.g. namespace in sub-123/rg-shared while deploying to sub-456/rg-demo).
+var eventHubNamespaceNameFromId = useExistingEventHubNamespace ? last(split(_safeEventHubNamespaceId, '/')) : ''
+var eventHubNamespaceSubscriptionId = useExistingEventHubNamespace ? split(_safeEventHubNamespaceId, '/')[2] : ''
+var eventHubNamespaceResourceGroup = useExistingEventHubNamespace ? split(_safeEventHubNamespaceId, '/')[4] : ''
 var useExistingFabricCapacity = !empty(existingFabricCapacityName)
 
 var solutionSuffix = toLower(trim(replace(
