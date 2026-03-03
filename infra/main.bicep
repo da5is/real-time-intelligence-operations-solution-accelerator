@@ -73,16 +73,16 @@ param existingFabricCapacityName string = ''
 // This follows best practices for Event Hub usage.
 // ============================================================================
 
+var useExistingEventHubNamespace = !empty(existingEventHubNamespaceId)
 // ARM eagerly evaluates both ternary branches at validation time, causing split('', '/')[n]
-// to throw index-out-of-bounds when the param is empty. startsWith also handles unsubstituted
-// '${ENV_VAR}' literals passed verbatim by az deployment validate (unlike azd which substitutes).
-// The nil GUID placeholder is structurally valid for ARM but can never target a real resource.
+// to throw index-out-of-bounds when the param is empty. Normalise to a structurally valid
+// ARM resource ID using the nil GUID (00000000-...) as subscription — a GUID Azure never
+// issues — so scope: resourceGroup(...) passes validation but can never target anything real.
 // The module is still gated by if(useExistingEventHubNamespace) and never deploys unless
 // a real existing namespace ID is provided.
-var useExistingEventHubNamespace = startsWith(existingEventHubNamespaceId, '/subscriptions/')
-var _safeEventHubNamespaceId = useExistingEventHubNamespace
-  ? existingEventHubNamespaceId
-  : '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/placeholder/providers/Microsoft.EventHub/namespaces/placeholder'
+var _safeEventHubNamespaceId = empty(existingEventHubNamespaceId)
+  ? '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/placeholder/providers/Microsoft.EventHub/namespaces/placeholder'
+  : existingEventHubNamespaceId
 // Extract name, subscription ID, and resource group from the resource ID.
 var eventHubNamespaceNameFromId = last(split(_safeEventHubNamespaceId, '/'))
 var eventHubNamespaceSubscriptionId = split(_safeEventHubNamespaceId, '/')[2]
