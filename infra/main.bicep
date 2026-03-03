@@ -87,7 +87,7 @@ var _safeEventHubNamespaceId = useExistingEventHubNamespace
 var eventHubNamespaceNameFromId = last(split(_safeEventHubNamespaceId, '/'))
 var eventHubNamespaceSubscriptionId = split(_safeEventHubNamespaceId, '/')[2]
 var eventHubNamespaceResourceGroup = split(_safeEventHubNamespaceId, '/')[4]
-var useExistingFabricCapacity = !empty(existingFabricCapacityName)
+var useExistingFabricCapacity = !empty(existingFabricCapacityName) && !startsWith(existingFabricCapacityName, '${') // guard against unsubstituted az CLI token
 
 var solutionSuffix = toLower(trim(replace(
   replace(
