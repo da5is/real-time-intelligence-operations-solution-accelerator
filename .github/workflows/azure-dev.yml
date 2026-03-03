@@ -172,12 +172,12 @@ jobs:
           azd env set AZURE_SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
           azd env set AZURE_RESOURCE_GROUP="$RESOURCE_GROUP_NAME"
 
-          # # Set optional workspace administrators if provided via repository variable
-          # FABRIC_WS_ADMINS="${{ vars.FABRIC_WORKSPACE_ADMINISTRATORS }}"
-          # if [ -n "$FABRIC_WS_ADMINS" ]; then
-          #   azd env set FABRIC_WORKSPACE_ADMINISTRATORS "$FABRIC_WS_ADMINS"
-          #   echo "Workspace administrators set: $FABRIC_WS_ADMINS"
-          # fi
+          # Set optional workspace administrators if provided via repository variable
+          FABRIC_WS_ADMINS="${{ vars.FABRIC_WORKSPACE_ADMINISTRATORS }}"
+          if [ -n "$FABRIC_WS_ADMINS" ]; then
+            azd env set FABRIC_WORKSPACE_ADMINISTRATORS "$FABRIC_WS_ADMINS"
+            echo "Workspace administrators set: $FABRIC_WS_ADMINS"
+          fi
 
           # Deploy using azd up
           azd up --no-prompt
