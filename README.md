@@ -219,8 +219,16 @@ Check out similar solution accelerators
 | [Unified Data Foundation with Microsoft Fabric](https://github.com/microsoft/unified-data-foundation-with-fabric-solution-accelerator) | Unified Data Foundation with Microsoft Fabric with Options to Integrate with Azure Databricks and Microsoft Purview. |
 | [Agentic applications for unified data foundation](https://github.com/microsoft/agentic-applications-for-unified-data-foundation-solution-accelerator) | Agentic AI application that provides natural language query of the data using unified data foundation. Description of solution accelerator. |
 
-<br/>   
+<br/>
 
+💡 Want to get familiar with Microsoft's AI and Data Engineering best practices? Check out our playbooks to learn more
+
+| Playbook | Description |
+|:---|:---|
+| [AI&nbsp;playbook](https://learn.microsoft.com/en-us/ai/playbook/) | The Artificial Intelligence (AI) Playbook provides enterprise software engineers with solutions, capabilities, and code developed to solve real-world AI problems. |
+| [Data&nbsp;playbook](https://learn.microsoft.com/en-us/data-engineering/playbook/understanding-data-playbook) | The data playbook provides enterprise software engineers with solutions which contain code developed to solve real-world problems. Everything in the playbook is developed with, and validated by, some of Microsoft's largest and most influential customers and partners. |
+
+<br/> 
 
 ## Provide feedback  (To update the link)
 
