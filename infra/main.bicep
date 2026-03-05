@@ -65,20 +65,23 @@ param existingFabricCapacityName string = ''
 
 // ============================================================================
 // Determine whether to use existing resources
+// Scenarios:
+// 1. Create new namespace + new event hub: existingEventHubNamespaceId not set
+// 2. Use existing namespace, create new event hub: existingEventHubNamespaceId is set
+//
+// NOTE: A new Event Hub is always created to avoid mixing unrelated event types.
+// This follows best practices for Event Hub usage.
 // ============================================================================
 
-// Use an existing namespace if a valid resource ID is provided; otherwise create a new one.
-// A new Event Hub is always created to avoid mixing unrelated event types.
-var useExistingEventHubNamespace = startsWith(existingEventHubNamespaceId, '/subscriptions/')
-// Fallback placeholder ensures split() is always called on a well-formed resource ID.
-var _safeEventHubNamespaceId = useExistingEventHubNamespace
-  ? existingEventHubNamespaceId
-  : '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/placeholder/providers/Microsoft.EventHub/namespaces/placeholder'
-var eventHubNamespaceNameFromId = last(split(_safeEventHubNamespaceId, '/'))
-var eventHubNamespaceSubscriptionId = split(_safeEventHubNamespaceId, '/')[2]
-var eventHubNamespaceResourceGroup = split(_safeEventHubNamespaceId, '/')[4]
-// Use an existing Fabric capacity if a valid name is provided; otherwise create a new one.
-var useExistingFabricCapacity = !empty(existingFabricCapacityName) && !startsWith(existingFabricCapacityName, '$')
+var useExistingEventHubNamespace = !empty(existingEventHubNamespaceId)
+// Extract namespace name from resource ID if using existing, otherwise generate new name
+var eventHubNamespaceNameFromId = useExistingEventHubNamespace ? last(split(existingEventHubNamespaceId, '/')) : ''
+// Parse subscription ID and resource group from the namespace resource ID
+// This enables cross-subscription and cross-resource-group deployments
+// Example: namespace in sub-123/rg-shared while deploying to sub-456/rg-demo
+var eventHubNamespaceSubscriptionId = useExistingEventHubNamespace ? split(existingEventHubNamespaceId, '/')[2] : ''
+var eventHubNamespaceResourceGroup = useExistingEventHubNamespace ? split(existingEventHubNamespaceId, '/')[4] : ''
+var useExistingFabricCapacity = !empty(existingFabricCapacityName)
 
 var solutionSuffix = toLower(trim(replace(
   replace(
