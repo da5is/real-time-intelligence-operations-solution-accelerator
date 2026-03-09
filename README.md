@@ -41,7 +41,7 @@ If you'd like to customize the solution accelerator, here are some common areas 
 
 <br/>
 
-### Additional resources
+## Resources
 
 [What's New in Microsoft Fabric](https://learn.microsoft.com/en-us/fabric/fundamentals/whats-new)
 
@@ -53,7 +53,8 @@ If you'd like to customize the solution accelerator, here are some common areas 
 
 <br/>
 
-### Key features
+## Features
+
 <details>
   <summary>Click to learn more about the key features this solution enables</summary> 
 
@@ -78,6 +79,8 @@ If you'd like to customize the solution accelerator, here are some common areas 
 <h2><img src="./docs/images/readme/quick-deploy.png" width="48" />
 Quick deploy
 </h2>
+
+## Getting Started
 
 ### How to install or deploy
 
@@ -189,6 +192,8 @@ Use cases can be summarized as below:
 <h2><img src="./docs/images/readme/supporting-documentation.png" width="48" />
 Supporting documentation
 </h2>
+
+## Guidance
 
 ### Security guidelines
 
