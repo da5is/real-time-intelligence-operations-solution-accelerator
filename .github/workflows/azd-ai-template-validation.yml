@@ -18,9 +18,29 @@ jobs:
     runs-on: ubuntu-latest
     name: Validation steps
     environment: 'rti-validate'
+    env:
+      RG_TAGS: ${{ vars.RG_TAGS }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Add RG tags into Bicep parameter file
+        shell: bash
+        run: |
+          # Parse RG_TAGS (format: "Key=Value Key2=Value2") into a JSON object
+          TAG_JSON="{}"
+          for tag in ${{ env.RG_TAGS }}; do
+            KEY="${tag%%=*}"
+            VALUE="${tag#*=}"
+            TAG_JSON=$(echo "$TAG_JSON" | jq --arg k "$KEY" --arg v "$VALUE" '. + {($k): $v}')
+          done
+
+          jq --argjson tags "$TAG_JSON" '.parameters.tags = {"value": $tags}' \
+            infra/main.parameters.json > infra/main.parameters.tmp.json
+          mv infra/main.parameters.tmp.json infra/main.parameters.json
+          echo "✅ Added tags into main.parameters.json"
+          cat infra/main.parameters.json
+
       - name: Validate AZD template
         uses: microsoft/template-validation-action@Latest
         id: validation
@@ -32,5 +52,5 @@ jobs:
           AZURE_ENV_NAME: '${{ vars.AZURE_ENV_NAME }}val'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: print result
+      - name: Print result
         run: cat ${{ steps.validation.outputs.resultFile }}
