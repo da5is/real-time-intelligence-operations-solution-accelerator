@@ -16,24 +16,24 @@ Requirements:
 """
 
 import argparse
-import sys
 from fabric_api import FabricApiClient, FabricWorkspaceApiClient, FabricApiError
+
 
 def setup_workspace(fabric_client: FabricApiClient, capacity_name: str, workspace_name: str) -> str:
     """
     Create a workspace (if it doesn't exist) and assign it to the specified capacity.
-    
+
     Args:
         fabric_client: Authenticated FabricApiClient instance
         capacity_name: Name of the capacity to assign the workspace to
         workspace_name: Name of the workspace to create
-        
+
     Returns:
         str: Workspace ID if successful, or None if failed
     """
     # Step 1: Get or create workspace
     existing_workspace = fabric_client.get_workspace(workspace_name)
-    
+
     if existing_workspace:
         workspace_id = existing_workspace['id']
         print(f"ℹ️  Using existing workspace: {workspace_name} ({workspace_id})")
@@ -41,11 +41,13 @@ def setup_workspace(fabric_client: FabricApiClient, capacity_name: str, workspac
         print(f"📁 Creating new workspace: '{workspace_name}'")
         try:
             workspace_id = fabric_client.create_workspace(name=workspace_name)
-            print(f"✅ Successfully created workspace: {workspace_name} ({workspace_id})")
+            print(
+                f"✅ Successfully created workspace: {workspace_name} ({workspace_id})")
         except FabricApiError as e:
             if e.status_code == 409:
                 # Handle race condition where workspace was created between check and create
-                print(f"ℹ️ Workspace '{workspace_name}' already exists (created during operation)")
+                print(
+                    f"ℹ️ Workspace '{workspace_name}' already exists (created during operation)")
                 existing_workspace = fabric_client.get_workspace(workspace_name)
                 workspace_id = existing_workspace['id']
             else:
@@ -67,8 +69,9 @@ def setup_workspace(fabric_client: FabricApiClient, capacity_name: str, workspac
     workspace_client = FabricWorkspaceApiClient(workspace_id=workspace_id)
     workspace_client.assign_to_capacity(capacity_id)
     print(f"✅ Successfully assigned workspace to capacity")
-    
+
     return workspace_id
+
 
 def main():
     """Main function to handle command line arguments and execute workspace setup."""
@@ -80,31 +83,31 @@ Examples:
   python fabric_workspace.py --capacity-name "Dev Capacity" --workspace-name "Development Workspace"
         """
     )
-    
+
     parser.add_argument(
-        "--capacity-name", 
-        required=True, 
+        "--capacity-name",
+        required=True,
         help="Name of the capacity to assign the workspace to"
     )
-    
+
     parser.add_argument(
-        "--workspace-name", 
-        required=True, 
+        "--workspace-name",
+        required=True,
         help="Name of the workspace to create"
     )
-    
+
     # Parse arguments
     args = parser.parse_args()
-    
+
     # Execute the main logic
     fabric_client = FabricApiClient()
-    
+
     result = setup_workspace(
         fabric_client=fabric_client,
         capacity_name=args.capacity_name,
         workspace_name=args.workspace_name
     )
-    
+
     print(f"\n✅ Workspace ID: {result if result else 'Failed'}")
     print(f"✅ Workspace Name: {args.workspace_name}")
 

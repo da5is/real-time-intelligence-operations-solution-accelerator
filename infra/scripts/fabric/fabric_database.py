@@ -14,8 +14,9 @@ Requirements:
     - Access to the specified Fabric cluster and database
 """
 
-import argparse
-import os
+from azure.kusto.data.exceptions import KustoServiceError
+from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
+from azure.identity import AzureCliCredential
 import sys
 from pathlib import Path
 
@@ -24,33 +25,31 @@ script_dir = Path(__file__).parent
 scripts_dir = script_dir.parent
 sys.path.insert(0, str(scripts_dir))
 
-from azure.identity import AzureCliCredential
-from azure.kusto.data import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
-from azure.kusto.data.exceptions import KustoServiceError
 
 def create_kusto_client(cluster_uri) -> KustoClient:
     """
     Create a Kusto client for Microsoft Fabric.
-    
+
     Parameters:
     -----------
     cluster_uri : str
         The URI of the Fabric cluster (e.g., "https://<cluster>.kusto.windows.net")
-    
+
     Returns:
     --------
     KustoClient
         Connected Kusto client instance
     """
     try:
-        
+
         print(f"Connecting to Fabric cluster: {cluster_uri}")
         credential = AzureCliCredential()
-        kcsb = KustoConnectionStringBuilder.with_azure_token_credential(cluster_uri, credential)
+        kcsb = KustoConnectionStringBuilder.with_azure_token_credential(
+            cluster_uri, credential)
         client = KustoClient(kcsb)
         print(f"✅ Connected to Fabric cluster")
         return client
-    
+
     except Exception as e:
         print(f"❌ Error: {e}")
         raise
@@ -59,19 +58,19 @@ def create_kusto_client(cluster_uri) -> KustoClient:
 def check_database_exists(client: KustoClient, database_name: str):
     """
     Check if a database exists in the Fabric cluster.
-    
+
     Parameters:
     -----------
     client : KustoClient
         Connected Kusto client
     database_name : str
         Name of the database to check
-    
+
     Returns:
     --------
     bool
         True if database exists
-        
+
     Raises:
     -------
     Exception
@@ -80,25 +79,27 @@ def check_database_exists(client: KustoClient, database_name: str):
     try:
         query = ".show databases"
         response = client.execute("NetDefaultDB", query)
-        
+
         databases = [row.to_dict()["PrettyName"] for row in response.primary_results[0]]
         database_exists = database_name in databases
-        
+
         if not database_exists:
-            raise Exception(f"Database '{database_name}' does not exist in the Fabric cluster. Please ensure the database exists before running this script.")
-        
+            raise Exception(
+                f"Database '{database_name}' does not exist in the Fabric cluster. Please ensure the database exists before running this script.")
+
         return True
-    
+
     except Exception as e:
         if "does not exist" in str(e):
             raise  # Re-raise our custom error message
         print(f"Error checking database existence: {e}")
         raise
 
+
 def check_table_exists(client: KustoClient, database_name: str, table_name: str):
     """
     Check if a table exists in the database.
-    
+
     Parameters:
     -----------
     client : KustoClient
@@ -107,7 +108,7 @@ def check_table_exists(client: KustoClient, database_name: str, table_name: str)
         Name of the database
     table_name : str
         Name of the table to check
-    
+
     Returns:
     --------
     bool
@@ -116,10 +117,10 @@ def check_table_exists(client: KustoClient, database_name: str, table_name: str)
     try:
         query = ".show tables"
         response = client.execute(database_name, query)
-        
+
         tables = [row["TableName"] for row in response.primary_results[0]]
         return table_name in tables
-    
+
     except Exception as e:
         print(f"Error checking table existence: {e}")
         return False
@@ -128,7 +129,7 @@ def check_table_exists(client: KustoClient, database_name: str, table_name: str)
 def create_table(client: KustoClient, database_name: str, table_name: str, schema: str):
     """
     Create a table in the database with the specified schema.
-    
+
     Parameters:
     -----------
     client : KustoClient
@@ -139,7 +140,7 @@ def create_table(client: KustoClient, database_name: str, table_name: str, schem
         Name of the table to create
     schema : str
         KQL schema definition for the table
-    
+
     Returns:
     --------
     bool
@@ -151,7 +152,7 @@ def create_table(client: KustoClient, database_name: str, table_name: str, schem
         client.execute(database_name, query)
         print(f"✅ Table '{table_name}' created successfully")
         return True
-    
+
     except KustoServiceError as e:
         if "already exists" in str(e).lower():
             print(f"✅ Table '{table_name}' already exists")
@@ -167,7 +168,7 @@ def create_table(client: KustoClient, database_name: str, table_name: str, schem
 def get_table_schemas():
     """
     Define the schemas for the manufacturing data tables.
-    
+
     Returns:
     --------
     dict
@@ -196,7 +197,7 @@ def get_table_schemas():
             SerialNumber: string,
             MaintenanceStatus: string
         )""",
-        
+
         "products": """(
             Id: string,
             CategoryId: int,
@@ -235,19 +236,19 @@ def setup_fabric_database(
     """
     Set up the Microsoft Fabric database tables for manufacturing data.
     Assumes the database already exists and will raise an error if not found.
-    
+
     Parameters:
     -----------
     cluster_uri : str
         The URI of the Fabric cluster
     database_name : str
         Name of the existing database
-    
+
     Returns:
     --------
     dict
         Summary of setup results
-        
+
     Raises:
     -------
     Exception
@@ -255,18 +256,18 @@ def setup_fabric_database(
     """
     try:
         print(f"Setting up Fabric database tables in: {database_name}")
-        
+
         # Create Kusto client
         client = create_kusto_client(cluster_uri)
-        
+
         # Check database exists (will raise error if not found)
         print(f"\nVerifying database: {database_name}")
         check_database_exists(client, database_name)
         print(f"✅ Database '{database_name}' verified and exists")
-        
+
         # Get table schemas
         schemas = get_table_schemas()
-        
+
         # Check and create tables
         print(f"\nChecking tables...")
         table_results = {}
@@ -279,18 +280,21 @@ def setup_fabric_database(
                     print(f"✅ Table '{table_name}' already exists")
                     table_results[table_name] = {"created": False, "success": True}
             except Exception as e:
-                table_results[table_name] = {"created": False, "success": False, "error": str(e)}
+                table_results[table_name] = {
+                    "created": False, "success": False, "error": str(e)}
                 print(f"Failed to create table {table_name}: {e}")
-        
+
         # Summary
-        successful_tables = sum(1 for r in table_results.values() if r.get("success", False))
-        created_tables = sum(1 for r in table_results.values() if r.get("created", False))
-        
+        successful_tables = sum(1 for r in table_results.values()
+                                if r.get("success", False))
+        created_tables = sum(1 for r in table_results.values()
+                             if r.get("created", False))
+
         print(f"\n✅ Database table setup complete!")
         print(f"   Database: {database_name}")
         print(f"   Tables: {successful_tables}/{len(schemas)} ready")
         print(f"   Created: {created_tables} new tables")
-        
+
         return {
             "database": database_name,
             "database_verified": True,
@@ -301,13 +305,13 @@ def setup_fabric_database(
                 "created_tables": created_tables
             }
         }
-    
+
     except Exception as e:
         print(f"Error: {e}")
         raise
 
 
-if __name__ == "__main__":    
+if __name__ == "__main__":
     try:
         results = setup_fabric_database(
             cluster_uri="https://<your-cluster-uri>",

@@ -32,9 +32,9 @@ import json
 import os
 import re
 import sys
-from typing import Dict, Any, Optional
 
 from fabric_api import FabricWorkspaceApiClient, FabricApiError
+
 
 def transform_activator_config(
     activator_config: list,
@@ -44,7 +44,7 @@ def transform_activator_config(
 ) -> list:
     """
     Transform activator configuration with dynamic values.
-    
+
     Args:
         activator_config: The original activator configuration list
         eventstream_id: ID of the eventhouse stream for the activator
@@ -52,14 +52,14 @@ def transform_activator_config(
         eventstream_name: Name for the event source (optional)
         activator_alerts_email: Email address to replace in alert
             configurations (optional)
-        
+
     Returns:
         Transformed activator configuration list
     """
     print(
         "📝 Updating activator configuration with dynamic values..."
     )
-    
+
     if eventstream_id:
         # Update eventstreamSource entities with the new artifact ID
         for entity in activator_config:
@@ -77,7 +77,7 @@ def transform_activator_config(
             "   Skipping eventstreamArtifactId updates "
             "(eventstream_id not provided)"
         )
-    
+
     if eventstream_name:
         # Update event names for timeSeriesView-v1 entities with definition type "Event"
         for entity in activator_config:
@@ -96,17 +96,17 @@ def transform_activator_config(
             "   Skipping event name updates "
             "(eventstream_name not provided)"
         )
-    
+
     if activator_alerts_email:
         # Email token regex pattern
         # Matches tokenized email format: __TOKEN_email_[counter]__
         email_token_pattern = r'__TOKEN_email_\d+__'
-        
+
         # Update tokenized email addresses in rule definitions
         # using regex
         emails_updated = 0
         found_email_tokens = set()
-        
+
         for entity in activator_config:
             if entity.get('type') == 'timeSeriesView-v1':
                 payload = entity.get('payload', {})
@@ -122,7 +122,7 @@ def transform_activator_config(
                             found_email_tokens.update(
                                 found_tokens_in_instance
                             )
-                            
+
                             # Replace all found email tokens
                             # with the new email
                             updated_instance_str = instance_str
@@ -139,13 +139,13 @@ def transform_activator_config(
                                     f"'{email_token}' to "
                                     f"'{activator_alerts_email}'"
                                 )
-                            
+
                             # Update the instance string
                             definition['instance'] = updated_instance_str
-                            
+
                         except Exception as e:
                             print(f"   Warning: {e}")
-        
+
         if emails_updated > 0:
             print(
                 f"   Updated {emails_updated} email token(s) "
@@ -162,8 +162,9 @@ def transform_activator_config(
             "   Skipping email address updates "
             "(activator_alerts_email not provided)"
         )
-    
+
     return activator_config
+
 
 def setup_activator_definition(
     workspace_client: FabricWorkspaceApiClient,
@@ -177,7 +178,7 @@ def setup_activator_definition(
     """
     Update the definition of an existing Activator (Reflex) in the
     specified workspace.
-    
+
     Args:
         workspace_client: Authenticated FabricWorkspaceApiClient instance
         workspace_id: ID of the workspace where the activator exists
@@ -193,7 +194,7 @@ def setup_activator_definition(
 
     Returns:
         Dictionary with activator information if successful
-        
+
     Raises:
         Exception: If activator update fails
     """
@@ -201,10 +202,10 @@ def setup_activator_definition(
         # Validate required parameters
         if not workspace_id or not workspace_id.strip():
             raise ValueError("workspace_id is required and cannot be empty")
-        
+
         if not activator_id or not activator_id.strip():
             raise ValueError("activator_id is required and cannot be empty")
-        
+
         # Use provided workspace client
         print("🔍 Using provided Fabric Workspace API client...")
 
@@ -224,7 +225,7 @@ def setup_activator_definition(
                 f"Activator with ID '{activator_id}' not found in "
                 f"workspace '{workspace_id}'"
             )
-        
+
         activator_name = existing_activator.get('displayName', 'Unknown')
         print(f"✅ Found activator: {activator_name}")
 
@@ -262,28 +263,29 @@ def setup_activator_definition(
 
         # Update the existing activator
         print(f"🔄 Updating activator definition (ID: {activator_id})...")
-        
+
         update_success = workspace_client.update_activator_definition(
             activator_id=activator_id,
             definition_base64=activator_base64
         )
-        
+
         if update_success:
             print(f"✅ Successfully updated activator definition")
-            
+
             # Get updated activator information
             updated_activator = workspace_client.get_activator_by_id(activator_id)
             return updated_activator
         else:
             print(f"❌ Failed to update activator definition")
             raise Exception(f"Failed to update activator definition")
-        
+
     except (FabricApiError, json.JSONDecodeError, FileNotFoundError) as e:
         print(f"❌ Error: {e}")
         raise
     except Exception as e:
         print(f"❌ Error: {e}")
         raise
+
 
 def main():
     """Main function to handle command line arguments and execute
@@ -311,52 +313,52 @@ Examples:
       --activator-alerts-email "alerts@contoso.com"
         """
     )
-    
+
     parser.add_argument(
-        "--workspace-id", 
-        required=True, 
+        "--workspace-id",
+        required=True,
         help="ID of the workspace where the activator exists"
     )
-    
+
     parser.add_argument(
-        "--activator-id", 
-        required=True, 
+        "--activator-id",
+        required=True,
         help="ID of the existing activator to update"
     )
-    
+
     parser.add_argument(
-        "--activator-file", 
-        required=True, 
+        "--activator-file",
+        required=True,
         help="Path to the JSON file containing the activator configuration"
     )
-    
+
     parser.add_argument(
-        "--eventstream-id", 
+        "--eventstream-id",
         help="ID of the eventstream for the activator (optional)"
     )
-    
+
     parser.add_argument(
-        "--eventstream-name", 
+        "--eventstream-name",
         help=(
             "Name for the eventstream "
             "(optional, preserves original if not provided)"
         )
     )
-    
+
     parser.add_argument(
-        "--activator-alerts-email", 
+        "--activator-alerts-email",
         help=(
             "Email address to replace in alert configurations "
             "(optional)"
         )
     )
-    
+
     # Parse arguments
     args = parser.parse_args()
-    
+
     # Execute the main logic
     from fabric_auth import authenticate_workspace
-    
+
     workspace_client = authenticate_workspace(args.workspace_id)
     if not workspace_client:
         print(
@@ -364,7 +366,7 @@ Examples:
             "Fabric API client"
         )
         sys.exit(1)
-    
+
     result = setup_activator_definition(
         workspace_client=workspace_client,
         workspace_id=args.workspace_id,
@@ -374,7 +376,7 @@ Examples:
         eventstream_name=args.eventstream_name,
         activator_alerts_email=args.activator_alerts_email
     )
-    
+
     print(f"\n✅ Activator ID: {result.get('id') if result else 'Failed'}")
     print(f"✅ Activator Name: {result.get('displayName') if result else 'Failed'}")
 
