@@ -13,7 +13,6 @@ Requirements:
 
 import os
 import sys
-import argparse
 from datetime import datetime
 
 def get_required_env_var(var_name: str) -> str:

@@ -24,7 +24,6 @@ import base64
 import json
 import os
 import sys
-from typing import Dict, Any, Optional
 from fabric_api import FabricWorkspaceApiClient, FabricApiError
 from fabric_auth import authenticate_workspace
 

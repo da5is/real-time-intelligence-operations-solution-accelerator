@@ -22,7 +22,7 @@ import requests
 import time
 import uuid
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Union, Any, Tuple
+from typing import Dict, Optional, Union, Any, Tuple
 from azure.identity import AzureCliCredential
 
 
