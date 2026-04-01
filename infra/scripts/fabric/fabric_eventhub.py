@@ -27,6 +27,7 @@ Environment Setup:
 """
 
 import argparse
+import os
 from azure.identity import AzureCliCredential
 from azure.mgmt.eventhub import EventHubManagementClient
 from fabric_api import FabricApiClient, FabricApiError
@@ -140,7 +141,7 @@ def get_event_hub_namespace_primary_key(namespace_name: str, subscription_id: st
         return result
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"❌ Failed to retrieve namespace access keys for '{namespace_name}': {e}")
         raise
 
 
@@ -178,16 +179,39 @@ def setup_eventhub_connection(
         Exception: If connection creation/update fails
     """
     try:
-        # Retrieve access key automatically
-        print(f"🔑 Retrieving access key for Event Hub: {event_hub_name}")
-        key_info = get_event_hub_namespace_primary_key(
-            namespace_name=namespace_name,
-            subscription_id=subscription_id,
-            resource_group_name=resource_group_name,
-            authorization_rule_name=authorization_rule_name
-        )
-        access_key = key_info['primary_key']
-        print(f"✅ Successfully retrieved access key")
+        # Allow an explicit key override via environment variable (useful in CI when listKeys RBAC is unavailable)
+        access_key = os.getenv("AZURE_EVENT_HUB_SHARED_ACCESS_KEY")
+        if access_key and access_key.strip():
+            print("🔑 Using AZURE_EVENT_HUB_SHARED_ACCESS_KEY from environment (override).")
+            access_key = access_key.strip()
+        else:
+            # Retrieve access key from Azure management API
+            print(f"🔑 Retrieving access key for Event Hub namespace: {namespace_name}")
+            try:
+                key_info = get_event_hub_namespace_primary_key(
+                    namespace_name=namespace_name,
+                    subscription_id=subscription_id,
+                    resource_group_name=resource_group_name,
+                    authorization_rule_name=authorization_rule_name
+                )
+                access_key = (key_info or {}).get("primary_key")
+            except Exception as key_error:
+                raise RuntimeError(
+                    f"Failed to retrieve Event Hub shared access key for namespace '{namespace_name}': {key_error}. "
+                    "Either set the AZURE_EVENT_HUB_SHARED_ACCESS_KEY environment variable, or grant the deployment "
+                    "identity permission to list Event Hub namespace keys "
+                    "(Microsoft.EventHub/namespaces/authorizationRules/listKeys/action)."
+                ) from key_error
+
+        if not access_key or not access_key.strip():
+            raise RuntimeError(
+                "Event Hub shared access key is missing or empty. "
+                "Either set the AZURE_EVENT_HUB_SHARED_ACCESS_KEY environment variable, or grant the deployment "
+                "identity permission to list Event Hub namespace keys "
+                "(Microsoft.EventHub/namespaces/authorizationRules/listKeys/action)."
+            )
+
+        print("✅ Successfully obtained Event Hub shared access key.")
         
         # Use the passed fabric_client instead of creating a new one
         client = fabric_client
