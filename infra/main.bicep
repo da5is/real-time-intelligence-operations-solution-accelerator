@@ -102,6 +102,10 @@ var allTags = union(
   tags
 )
 
+var eventHubTags = union(allTags, {
+  SecurityControl: 'Ignore' // Required to override MSFT subscription policy controls that enforce disableLocalAuth; local auth needed for Fabric SAS connection
+})
+
 resource resourceGroupTags 'Microsoft.Resources/tags@2021-04-01' = {
   name: 'default'
   properties: {
@@ -142,6 +146,7 @@ module eventHubNamespaceModule 'br/public:avm/res/event-hub/namespace:0.13.0' = 
     skuName: 'Standard'
     skuCapacity: 1
     disableLocalAuth: false // NOTE: local auth is currently needed in order to create connection with Fabric via SAS token
+    tags: eventHubTags
     eventhubs: [
       {
         name: eventHubName
