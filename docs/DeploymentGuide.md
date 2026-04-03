@@ -548,6 +548,11 @@ az login
 
 ### 4.4 Start Deployment
 
+**NOTE:** If you are running the latest azd version (version 1.23.9), please run the following command. 
+```bash 
+azd config set provision.preflight off
+```
+
 Run the deployment command:
 
 ```bash
