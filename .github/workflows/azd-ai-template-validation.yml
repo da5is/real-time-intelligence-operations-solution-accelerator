@@ -5,6 +5,11 @@ on:
       branches:
         - main
         - dev
+      paths:
+        - 'infra/**'
+        - 'src/**'
+        - 'azure.yaml'
+        - '.github/workflows/azd-ai-template-validation.yml'
     workflow_dispatch:
 
 # Set up permissions for deploying with secretless Azure federated credentials
