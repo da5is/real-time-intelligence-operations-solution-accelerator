@@ -1,12 +1,9 @@
 name: CI/CD Azure - Real-Time Intelligence Operations
 
-# Trigger the workflow on push to main/master or manual dispatch
+# Trigger the workflow on manual dispatch
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-      - dev
+  
   #     - "*"
   #   paths:
   #     - "infra/**"
@@ -32,6 +29,10 @@ env:
   AZURE_LOCATION: 'westus3'
   PYTHONIOENCODING: utf-8
   RG_TAGS: ${{ vars.RG_TAGS }}
+  TEMPLATE_USE_DEV_CONTAINER: ${{ vars.TEMPLATE_USE_DEV_CONTAINER }}
+  TEMPLATE_VALIDATE_AZD: ${{ vars.TEMPLATE_VALIDATE_AZD }}
+  TEMPLATE_VALIDATE_TESTS: ${{ vars.TEMPLATE_VALIDATE_TESTS }}
+  AZURE_DEV_COLLECT_TELEMETRY: ${{ vars.AZURE_DEV_COLLECT_TELEMETRY }}
   
 jobs:
   build:
@@ -90,9 +91,10 @@ jobs:
         shell: bash
         run: |
           COMMON_PART="rtio"
+          HHMM=$(date -u +'%H%M')
           TIMESTAMP=$(date +%s)
-          UPDATED_TIMESTAMP=$(echo $TIMESTAMP | tail -c 6)
-          UNIQUE_ENV_NAME="${COMMON_PART}${UPDATED_TIMESTAMP}"
+          UPDATED_TIMESTAMP=$(echo "$TIMESTAMP" | tail -c 6)
+          UNIQUE_ENV_NAME="${COMMON_PART}${HHMM}${UPDATED_TIMESTAMP}"
           echo "ENV_NAME=${UNIQUE_ENV_NAME}" >> $GITHUB_ENV
           echo "Generated Environment Name: ${UNIQUE_ENV_NAME}"
           
