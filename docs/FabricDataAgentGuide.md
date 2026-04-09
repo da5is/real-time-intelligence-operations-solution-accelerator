@@ -6,6 +6,11 @@ After you have deployed your solution, you can add Azure Data Agent to get data 
 - Add the KQL Database created in the Fabric workspace as your data source,
 - Use the Agent configuration files provided below to set up your Fabric Data Agent. 
 
+> [!NOTE]
+> The Fabric Data Agent SDK is currently in **Preview**. After deployment, table selections may not persist — you may need to manually select the required tables in the Fabric portal under the **Data** tab and save. Once saved through the UI, the selections persist and the agent works as expected.
+>
+> ![Data Agent - Tables Selected](../docs/images/deployment/data_agent_tables_selected.png)
+
 ## 📁 Agent Configuration Files
 
 This folder contains essential configuration files for setting up your Fabric Data Agent to deliver optimal intelligence based on your data.
