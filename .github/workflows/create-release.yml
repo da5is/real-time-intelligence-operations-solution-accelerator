@@ -3,12 +3,6 @@ name: "Create Release"
 on:
   push:
     branches: ["main"]
-    paths:
-      - 'src/**'
-      - 'infra/**'
-      - 'azure.yaml'
-      - 'requirements.txt'
-      - '.github/workflows/create-release.yml'
 
   workflow_dispatch:
 
