@@ -10,6 +10,9 @@
     },
     "existingFabricCapacityName": {
       "value": "${EXISTING_FABRIC_CAPACITY_NAME}"
+    },
+    "tags": {
+      "value": "${AZURE_TAGS}"
     }
   }
 }
