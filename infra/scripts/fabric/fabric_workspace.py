@@ -16,7 +16,6 @@ Requirements:
 """
 
 import argparse
-import sys
 from fabric_api import FabricApiClient, FabricWorkspaceApiClient, FabricApiError
 
 def setup_workspace(fabric_client: FabricApiClient, capacity_name: str, workspace_name: str) -> str:

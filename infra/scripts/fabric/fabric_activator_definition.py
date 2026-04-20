@@ -32,7 +32,6 @@ import json
 import os
 import re
 import sys
-from typing import Dict, Any, Optional
 
 from fabric_api import FabricWorkspaceApiClient, FabricApiError
 

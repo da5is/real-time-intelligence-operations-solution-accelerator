@@ -18,7 +18,7 @@ Requirements:
 import argparse
 import sys
 import time
-from typing import Optional, Dict, Any
+from typing import Optional
 from fabric_api import FabricWorkspaceApiClient, FabricApiError
 
 

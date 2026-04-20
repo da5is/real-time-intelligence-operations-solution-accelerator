@@ -5,7 +5,8 @@ metadata:
   template: real-time-intelligence-operations-solution-accelerator@1.0
 
 requiredVersions:
-  azd: ">= 1.19.0"
+  azd: ">= 1.19.0 != 1.23.9"
+  bicep: '>= 0.33.0'
 
 hooks:
   postprovision:

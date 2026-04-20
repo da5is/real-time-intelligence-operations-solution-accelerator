@@ -27,7 +27,6 @@ Environment Setup:
 """
 
 import argparse
-import sys
 from azure.identity import AzureCliCredential
 from azure.mgmt.eventhub import EventHubManagementClient
 from fabric_api import FabricApiClient, FabricApiError

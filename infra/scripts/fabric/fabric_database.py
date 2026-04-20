@@ -14,8 +14,6 @@ Requirements:
     - Access to the specified Fabric cluster and database
 """
 
-import argparse
-import os
 import sys
 from pathlib import Path
 
@@ -25,7 +23,7 @@ scripts_dir = script_dir.parent
 sys.path.insert(0, str(scripts_dir))
 
 from azure.identity import AzureCliCredential
-from azure.kusto.data import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
+from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
 from azure.kusto.data.exceptions import KustoServiceError
 
 def create_kusto_client(cluster_uri) -> KustoClient:

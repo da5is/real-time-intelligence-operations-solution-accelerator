@@ -1,11 +1,18 @@
 name: AZD AI Template validation
-# Run when commits are pushed to pre-deploy-alguadam
+
 on:
-    push:
-      branches:
-        - main
-        - dev
-    workflow_dispatch:
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - 'infra/**'
+      - 'src/**'
+      - 'azure.yaml'
+      - '.github/workflows/azd-ai-template-validation.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '30 1 * * 4' # Every Thursday 7:00 AM IST / 1:30 AM UTC
 
 # Set up permissions for deploying with secretless Azure federated credentials
 # https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-portal%2Clinux#set-up-azure-login-with-openid-connect-authentication
@@ -13,16 +20,29 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+  AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+  AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+  RG_TAGS: ${{ vars.RG_TAGS }}
+  TEMPLATE_USE_DEV_CONTAINER: ${{ vars.TEMPLATE_USE_DEV_CONTAINER }}
+  TEMPLATE_VALIDATE_AZD: ${{ vars.TEMPLATE_VALIDATE_AZD }}
+  TEMPLATE_VALIDATE_TESTS: ${{ vars.TEMPLATE_VALIDATE_TESTS }}
+  AZURE_DEV_COLLECT_TELEMETRY: ${{ vars.AZURE_DEV_COLLECT_TELEMETRY }}
+
 jobs:
   validate:
     runs-on: ubuntu-latest
     name: Validation steps
     environment: 'rti-validate'
-    env:
-      RG_TAGS: ${{ vars.RG_TAGS }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set timestamp
+        shell: bash
+        run: echo "HHMM=$(date -u +'%H%M')" >> $GITHUB_ENV
 
       - name: Add RG tags into Bicep parameter file
         shell: bash
@@ -45,11 +65,15 @@ jobs:
         uses: microsoft/template-validation-action@Latest
         id: validation
         env:
-          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
-          AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-          AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
-          AZURE_ENV_NAME: '${{ vars.AZURE_ENV_NAME }}val'
+          AZURE_CLIENT_ID: ${{ env.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ env.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          AZURE_LOCATION: ${{ env.AZURE_LOCATION }}
+          AZURE_ENV_NAME: azd-${{ vars.AZURE_ENV_NAME }}-${{ env.HHMM }}
+          TEMPLATE_USE_DEV_CONTAINER: ${{ env.TEMPLATE_USE_DEV_CONTAINER }}
+          TEMPLATE_VALIDATE_AZD: ${{ env.TEMPLATE_VALIDATE_AZD }}
+          TEMPLATE_VALIDATE_TESTS: ${{ env.TEMPLATE_VALIDATE_TESTS }}
+          AZURE_DEV_COLLECT_TELEMETRY: ${{ env.AZURE_DEV_COLLECT_TELEMETRY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Print result

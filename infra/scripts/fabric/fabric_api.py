@@ -86,6 +86,22 @@ class FabricApiClient:
         minutes = int(elapsed_seconds // 60)
         seconds = int(elapsed_seconds % 60)
         return f"{minutes}m {seconds}s"
+
+    @staticmethod
+    def _normalize_eventhub_endpoint(namespace_or_endpoint: str) -> str:
+        """Normalize Event Hub endpoint to the connector-expected host format.
+
+        Accepts either a bare namespace (e.g. "myns") or a full endpoint
+        (e.g. "sb://myns.servicebus.windows.net/") and returns
+        "myns.servicebus.windows.net".
+        """
+        endpoint = (namespace_or_endpoint or "").strip()
+        if endpoint.startswith("sb://"):
+            endpoint = endpoint[len("sb://"):]
+        endpoint = endpoint.rstrip("/")
+        if ".servicebus.windows.net" not in endpoint:
+            endpoint = f"{endpoint}.servicebus.windows.net"
+        return endpoint
     
     def start_long_running_operation(self,
                                    uri: str,
@@ -759,6 +775,8 @@ class FabricApiClient:
         """
         self._log(f"Creating Event Hub connection: {name}")
         
+        normalized_endpoint = self._normalize_eventhub_endpoint(namespace_name)
+
         connection_payload = {
             "displayName": name,
             "connectivityType": "ShareableCloud",
@@ -770,7 +788,7 @@ class FabricApiClient:
                     {
                         "name": "endpoint",
                         "dataType": "Text",
-                        "value": namespace_name,
+                        "value": normalized_endpoint,
                     },
                     {
                         "name": "entityPath",
@@ -780,6 +798,7 @@ class FabricApiClient:
                 ]
             },
             "credentialDetails": {
+                "singleSignOnType": "None",
                 "credentials": {
                     "credentialType": "Basic", # the endpoint only accepts Basic auth, but takes SAS key with policy name as password and username
                     "username": shared_access_policy_name, #"RootManageSharedAccessKey",
@@ -818,11 +837,30 @@ class FabricApiClient:
         try:
             self._log(f"Updating Event Hub connection: {name} (ID: {connection_id})")
             
+            normalized_endpoint = self._normalize_eventhub_endpoint(namespace_name)
+
             connection_payload = {
                 "displayName": name,
                 "connectivityType": "ShareableCloud",
                 "allowConnectionUsageInGateway": False,
+                "connectionDetails": {
+                    "type": "EventHub",
+                    "creationMethod": "EventHub.Contents",
+                    "parameters": [
+                        {
+                            "name": "endpoint",
+                            "dataType": "Text",
+                            "value": normalized_endpoint,
+                        },
+                        {
+                            "name": "entityPath",
+                            "dataType": "Text",
+                            "value": event_hub_name,
+                        }
+                    ]
+                },
                 "credentialDetails": {
+                    "singleSignOnType": "None",
                     "credentials": {
                         "credentialType": "Basic", # the endpoint only accepts Basic auth, but takes SAS key with policy name as password and username
                         "username": shared_access_policy_name,
