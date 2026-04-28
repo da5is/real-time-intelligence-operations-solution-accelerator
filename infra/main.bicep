@@ -106,10 +106,10 @@ var eventHubTags = union(allTags, {
   SecurityControl: 'Ignore' // Required to override MSFT subscription policy controls that enforce disableLocalAuth; local auth needed for Fabric SAS connection
 })
 
-resource resourceGroupTags 'Microsoft.Resources/tags@2021-04-01' = {
+resource resourceGroupTags 'Microsoft.Resources/tags@2023-07-01' = {
   name: 'default'
   properties: {
-    tags: union(reference(resourceGroup().id, '2021-04-01', 'Full').?tags ?? {}, allTags)
+    tags: union(reference(resourceGroup().id, '2023-07-01', 'Full').?tags ?? {}, allTags)
   }
 }
 
@@ -138,7 +138,7 @@ module eventHubCrossScope 'modules/event-hub.bicep' = if (useExistingEventHubNam
 }
 
 // Create a new Event Hub Namespace with an Event Hub when not using an existing namespace.
-module eventHubNamespaceModule 'br/public:avm/res/event-hub/namespace:0.13.0' = if (!useExistingEventHubNamespace) {
+module eventHubNamespaceModule 'br/public:avm/res/event-hub/namespace:0.14.1' = if (!useExistingEventHubNamespace) {
   name: take('avm.res.event-hub.namespace.${eventHubNamespaceName}', 64)
   params: {
     name: eventHubNamespaceName
