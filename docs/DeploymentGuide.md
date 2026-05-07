@@ -125,6 +125,7 @@ Install the following tools on your local machine:
 | **Python** | 3.9 or later | [Download from python.org](https://www.python.org/downloads/) |
 | **Azure CLI** | Latest | [Install Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) |
 | **Azure Developer CLI (azd)** | Latest | [Install azd](https://learn.microsoft.com/azure/developer/azure-developer-cli/install-azd) |
+| **Bicep CLI** | 0.33.0 or later | [Install Bicep](https://learn.microsoft.com/azure/azure-resource-manager/bicep/install) |
 | **Git** | Latest | [Download from git-scm.com](https://git-scm.com/downloads) |
 
 <details>
@@ -134,6 +135,7 @@ Install the following tools on your local machine:
 python --version
 az --version
 azd version
+az bicep version
 git --version
 ```
 
