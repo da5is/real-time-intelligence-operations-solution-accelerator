@@ -11,6 +11,15 @@
     "existingFabricCapacityName": {
       "value": "${EXISTING_FABRIC_CAPACITY_NAME}"
     },
+    "eventHubNamespaceNameParam": {
+      "value": "${AZURE_EVENT_HUB_NAMESPACE_NAME_OVERRIDE}"
+    },
+    "eventHubNameParam": {
+      "value": "${AZURE_EVENT_HUB_NAME_OVERRIDE}"
+    },
+    "fabricCapacityNameParam": {
+      "value": "${AZURE_FABRIC_CAPACITY_NAME_OVERRIDE}"
+    },
     "tags": {
       "value": "${AZURE_TAGS}"
     }

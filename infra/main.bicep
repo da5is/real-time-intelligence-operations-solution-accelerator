@@ -48,6 +48,21 @@ param userObjectId string = deployer().objectId
 param tags resourceInput<'Microsoft.Resources/resourceGroups@2025-04-01'>.tags = {}
 
 // ============================================================================
+// RESOURCE NAME OVERRIDES
+// When provided, these override the auto-generated resource names.
+// Use to enforce organizational naming conventions (e.g., {abbrev}-{purpose}-{region}-{iter}).
+// ============================================================================
+
+@description('Optional. Explicit name for the Event Hub Namespace. When provided, overrides the auto-generated name. Must be globally unique, 6-50 chars, letters/numbers/hyphens only.')
+param eventHubNamespaceNameParam string = ''
+
+@description('Optional. Explicit name for the Event Hub. When provided, overrides the auto-generated name.')
+param eventHubNameParam string = ''
+
+@description('Optional. Explicit name for the Fabric Capacity. When provided, overrides the auto-generated name. Lowercase letters and numbers only (no hyphens), 3-63 chars.')
+param fabricCapacityNameParam string = ''
+
+// ============================================================================
 // EXISTING RESOURCE PARAMETERS
 // When provided, the deployment uses existing resources instead of creating new
 // ones. These are expected to be set via `azd env set` before `azd up`.
@@ -98,6 +113,7 @@ var allTags = union(
     'azd-env-name': solutionName
     TemplateName: 'Real-time Ingestion Fabric Solution Accelerator'
     Type:'Non-WAF'
+    SecurityControl: 'Ignore' // Required to override MSFT subscription policy controls; applied to RG before any resource deployment
   },
   tags
 )
@@ -117,9 +133,11 @@ resource resourceGroupTags 'Microsoft.Resources/tags@2023-07-01' = {
 // EVENT HUB (Azure)
 // ============================================================================
 
-var eventHubNamespaceName = useExistingEventHubNamespace ? eventHubNamespaceNameFromId : 'evhns${solutionSuffix}'
+var eventHubNamespaceName = useExistingEventHubNamespace
+  ? eventHubNamespaceNameFromId
+  : (!empty(eventHubNamespaceNameParam) ? eventHubNamespaceNameParam : 'evhns${solutionSuffix}')
 // Always create a new Event Hub to avoid mixing unrelated event types (best practice)
-var eventHubName = 'evh${solutionSuffix}'
+var eventHubName = !empty(eventHubNameParam) ? eventHubNameParam : 'evh${solutionSuffix}'
 
 // Deploy Event Hub to existing namespace (supports cross-subscription/cross-RG scenarios)
 // The module is deployed to the namespace's actual location, which may be:
@@ -140,6 +158,7 @@ module eventHubCrossScope 'modules/event-hub.bicep' = if (useExistingEventHubNam
 // Create a new Event Hub Namespace with an Event Hub when not using an existing namespace.
 module eventHubNamespaceModule 'br/public:avm/res/event-hub/namespace:0.14.1' = if (!useExistingEventHubNamespace) {
   name: take('avm.res.event-hub.namespace.${eventHubNamespaceName}', 64)
+  dependsOn: [resourceGroupTags]
   params: {
     name: eventHubNamespaceName
     location: location
@@ -167,7 +186,9 @@ module eventHubNamespaceModule 'br/public:avm/res/event-hub/namespace:0.14.1' = 
 // FABRIC CAPACITY (Azure)
 // ============================================================================
 
-var fabricCapacityResourceName = useExistingFabricCapacity ? existingFabricCapacityName : 'fc${solutionSuffix}'
+var fabricCapacityResourceName = useExistingFabricCapacity
+  ? existingFabricCapacityName
+  : (!empty(fabricCapacityNameParam) ? fabricCapacityNameParam : 'fc${solutionSuffix}')
 var fabricCapacityDefaultAdmins = deployer().?userPrincipalName == null
   ? [deployer().objectId]
   : [deployer().userPrincipalName]
@@ -176,6 +197,7 @@ var fabricTotalAdminMembers = union(fabricCapacityDefaultAdmins, fabricAdminMemb
 // Create new Fabric Capacity when not using existing resources
 module fabricCapacity 'br/public:avm/res/fabric/capacity:0.1.2' = if (!useExistingFabricCapacity) {
   name: take('avm.res.fabric.capacity.${fabricCapacityResourceName}', 64)
+  dependsOn: [resourceGroupTags]
   params: {
     name: fabricCapacityResourceName
     location: location
