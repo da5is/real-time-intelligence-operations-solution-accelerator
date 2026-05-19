@@ -17,6 +17,7 @@ Requirements:
 
 import argparse
 import sys
+import time
 from fabric_api import FabricWorkspaceApiClient, FabricApiError
 from fabric_auth import authenticate_workspace
 
@@ -53,21 +54,46 @@ def create_eventstream(workspace_client: FabricWorkspaceApiClient,
         existing_eventstream = workspace_client.get_eventstream_by_name(eventstream_name)
         
         if existing_eventstream:
-            print(f"✅ Eventstream '{eventstream_name}' already exists (ID: {existing_eventstream.get('id')})")
-            return existing_eventstream
-        else:
-            # Create a new eventstream with minimal configuration
-            print(f"📊 Creating new eventstream '{eventstream_name}'...")
-            eventstream_result = workspace_client.create_eventstream(
-                display_name=eventstream_name,
-                description=f"Eventstream: {eventstream_name}"
+            # Delete and recreate to ensure a clean state for definition updates
+            existing_id = existing_eventstream.get('id')
+            print(
+                f"♻️  Eventstream '{eventstream_name}' already exists"
+                f" (ID: {existing_id}), deleting to recreate..."
             )
-            
-            eventstream_id = eventstream_result.get('id')
-            print(f"✅ Successfully created eventstream '{eventstream_name}' (ID: {eventstream_id})")
-            print(f"⚠️  Note: Use fabric_eventstream_definition.py to set up the eventstream configuration")
-            
-            return eventstream_result
+            workspace_client.delete_eventstream(existing_id)
+            print(f"✅ Deleted existing eventstream '{eventstream_name}'")
+
+        # Create a new eventstream with minimal configuration
+        print(f"📊 Creating new eventstream '{eventstream_name}'...")
+        max_retries = 6
+        retry_delay = 10  # seconds
+        for attempt in range(1, max_retries + 1):
+            try:
+                eventstream_result = workspace_client.create_eventstream(
+                    display_name=eventstream_name,
+                    description=f"Eventstream: {eventstream_name}"
+                )
+                break
+            except FabricApiError as create_err:
+                is_name_conflict = (
+                    getattr(create_err, 'status_code', None) == 409
+                    or "NotAvailableYet" in str(create_err)
+                )
+                if is_name_conflict and attempt < max_retries:
+                    print(
+                        f"⏳ Name not available yet, retrying"
+                        f" in {retry_delay}s... "
+                        f"(attempt {attempt}/{max_retries})"
+                    )
+                    time.sleep(retry_delay)
+                else:
+                    raise
+        
+        eventstream_id = eventstream_result.get('id')
+        print(f"✅ Successfully created eventstream '{eventstream_name}' (ID: {eventstream_id})")
+        print(f"⚠️  Note: Use fabric_eventstream_definition.py to set up the eventstream configuration")
+        
+        return eventstream_result
         
     except FabricApiError as e:
         print(f"❌ FabricApiError ({e.status_code}): {e}")

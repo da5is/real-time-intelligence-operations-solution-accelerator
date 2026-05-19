@@ -541,8 +541,13 @@ def main():
     
     print_step(11, 14, "Updating Eventstream Definition", workspace_id=workspace_id, eventstream_id=eventstream_id, eventhouse_database_name=eventhouse_database_name)
     try:
-        # Create destination-friendly names (without underscores) for eventstream
-        eventhouse_destination_name = eventhouse_name.replace('_', '-')
+        # Create destination-friendly names for eventstream.
+        # Use database name for the eventhouse destination to avoid
+        # collisions with the Event Hub source name (both the eventhouse
+        # and event hub may share the same base name like "evh-rti-sec-01").
+        eventhouse_destination_name = (
+            eventhouse_database_name.replace('_', '-')
+        )
         activator_destination_name = activator_name.replace('_', '-')
         
         eventstream_definition_result = setup_eventstream_definition(
